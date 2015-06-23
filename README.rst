@@ -41,3 +41,26 @@ arguments to py.test through tox with ``--``. E.g.::
     tox -- tests/test_base_resources.py::TestReferences::test_known_resource
 
 See ``tox --help`` and ``py.test --help`` for more information.
+
+Publishing
+----------
+
+1. Install `twine <https://pypi.python.org/pypi/twine>`_ and
+   `wheel <https://pypi.python.org/pypi/wheel>`_::
+
+    pip install twine wheel
+
+2. Increment version number in ``setup.py`` according to
+   `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_.
+
+3. Register the package::
+
+    python setup.py register
+
+3. Package source and wheel distributions::
+
+    python setup.py sdist bdist_wheel
+
+4. Upload to PyPI with twine::
+
+    twine upload dist/*
