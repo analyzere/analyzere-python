@@ -1,0 +1,5 @@
+/analyzere.egg-info
+/build
+/dist
+/.tox
+*.pyc
