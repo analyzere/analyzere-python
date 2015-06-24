@@ -13,7 +13,7 @@ with open(path.join(here, 'requirements', 'install.txt'),
 
 setup(
     name='analyzere',
-    version='0.1',
+    version='0.2',
     description='Python wrapper for the Analyze Re API.',
     long_description=readme,
     url='https://github.com/analyzere/analyzere-python',
