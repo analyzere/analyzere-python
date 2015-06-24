@@ -1,8 +1,12 @@
-Analyze Re Python Client
-========================
+Analyze Re Python Client |travis|
+=================================
 
 This is a Python wrapper for a Analyze Re REST API. It allows you to easily
 utilize the PRIME Re platform in your applications.
+
+.. |travis| image:: https://travis-ci.org/analyzere/analyzere-python.svg
+    :alt: Travis-CI Build Status
+    :target: https://travis-ci.org/analyzere/analyzere-python
 
 Installation
 ------------
