@@ -42,7 +42,11 @@ def request(method, path, params=None, data=None):
     if data is not None:
         body = json.dumps(data, cls=utils.DateTimeEncoder)
 
-    resp = request_raw(method, path, params=params, body=body)
+    headers = {
+        'accept': 'application/json',
+        'content-type': 'application/json',
+    }
+    resp = request_raw(method, path, params=params, body=body, headers=headers)
     content = resp.text
     if content:
         try:
