@@ -215,7 +215,7 @@ class DataResource(Resource):
         return self._data_path + '/commit'
 
     @property
-    def status(self):
+    def upload_status(self):
         resp = request('get', self._status_path)
         return convert_to_analyzere_object(resp)
 
@@ -243,7 +243,7 @@ class DataResource(Resource):
 
         # Block until data has finished processing
         while True:
-            resp = self.status
+            resp = self.upload_status
             if (resp.status == 'Processing Successful' or
                     resp.status == 'Processing Failed'):
                 return resp
