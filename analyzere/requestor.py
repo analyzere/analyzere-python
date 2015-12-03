@@ -63,6 +63,7 @@ def request_raw(method, path, params=None, body=None, headers=None,
         'params': params,
         'data': body,
         'headers': headers,
+        'verify': analyzere.tls_verify,
     }
 
     username = analyzere.username
