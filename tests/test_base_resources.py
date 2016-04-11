@@ -460,6 +460,14 @@ class TestMetricsResource(SetBaseUrl):
         f = FooView(id='abc123')
         assert f.download_ylt() == b'ylt-data'
 
+    def test_unknown_resource_equality(self, reqmock):
+        reqmock.get('https://api/foo/abc123', status_code=200,
+                    text='{"id": "abc123", "foo": "bar"}')
+        href = 'https://api/foo/abc123'
+        r1 = Reference(href)
+        r2 = Reference(href)
+        assert r1 == r2
+
     # TODO: Add tests for id: None
 
 
