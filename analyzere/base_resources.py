@@ -57,6 +57,14 @@ def load_reference(collection_name, id_):
         # subclass with the correct collection name so retrieve() works.
         class UnknownResource(Resource):
             _collection_name = collection_name
+
+            def __eq__(self, other):
+                # Overridden since the super would compare that other is an
+                # instance of self.__class__ but each UnknownResource has it's
+                # own class. An alternative would be to store a map (dict) from
+                # collection name -> UnknownResource classes, and ensure only
+                # one is made for each collection.
+                return self.__dict__ == other.__dict__
         cls = UnknownResource
     return cls.retrieve(id_)
 
