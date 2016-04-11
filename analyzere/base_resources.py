@@ -4,6 +4,7 @@ import time
 
 from lazy_object_proxy import Proxy
 import six
+import uuid
 from six import StringIO
 
 import analyzere
@@ -147,6 +148,13 @@ class AnalyzeReObject(object):
                 k = '_type'
             d[k] = to_dict(v)
         return d
+
+    def __hash__(self):
+        # Certainly not the most efficient hash, since anything without an ID
+        # has the same hash value.
+        if hasattr(self, "id"):
+            int(uuid.UUID(self.id))
+        return 0
 
 
 class Resource(AnalyzeReObject):
