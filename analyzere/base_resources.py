@@ -148,6 +148,12 @@ class AnalyzeReObject(object):
             d[k] = to_dict(v)
         return d
 
+    @classmethod
+    def from_dict(cls, d):
+        o = cls()
+        o.__dict__.update(d)
+        return o
+
 
 class Resource(AnalyzeReObject):
     """
