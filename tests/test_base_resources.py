@@ -386,6 +386,96 @@ class TestDataResource(SetBaseUrl):
         req = reqmock.request_history[3]
         assert req.text is None
 
+    def test_upload_data_file(self, reqmock):
+        reqmock.post('https://api/bars/abc123/data', status_code=201,
+                     text='data')
+        reqmock.patch('https://api/bars/abc123/data', status_code=204)
+        reqmock.post('https://api/bars/abc123/data/commit', status_code=204)
+        reqmock.get('https://api/bars/abc123/data/status', status_code=200,
+                    text='{"status": "Processing Successful"}')
+
+        f = Bar(id='abc123')
+
+        # Create file object
+        file_obj = StringIO('data')
+
+        f.upload_data(file_obj)
+        assert reqmock.call_count == 4
+
+        # Assert initiates session
+        req = reqmock.request_history[0]
+        assert req.headers['Entity-Length'] == 4
+        assert req.text is None
+
+        # Assert uploads first chunk
+        req = reqmock.request_history[1]
+        assert req.headers['Content-Type'] == 'application/offset+octet-stream'
+        assert req.headers['Content-Length'] == '4'
+        assert req.headers['Offset'] == 0
+        assert req.text == 'data'
+
+        # Assert session committed
+        req = reqmock.request_history[2]
+        assert req.text is None
+
+        # Assert upload status checked
+        req = reqmock.request_history[3]
+        assert req.text is None
+
+    def test_upload_data_chunking(self, reqmock):
+        reqmock.post('https://api/bars/abc123/data', status_code=201,
+                     text='data')
+        reqmock.patch('https://api/bars/abc123/data', status_code=204)
+        reqmock.post('https://api/bars/abc123/data/commit', status_code=204)
+        reqmock.get('https://api/bars/abc123/data/status', status_code=200,
+                    text='{"status": "Processing Successful"}')
+
+        f = Bar(id='abc123')
+
+        # Create file object
+        file_obj = StringIO('data')
+
+        # Save original chunk size
+        orig_upload_chunk_size = analyzere.upload_chunk_size
+
+        # Set chunking to 3 bytes per chunk
+        analyzere.upload_chunk_size = 3
+
+        # Upload file
+        f.upload_data(file_obj)
+
+        # Reset original upload chunk size
+        analyzere.upload_chunk_size = orig_upload_chunk_size
+
+        assert reqmock.call_count == 5
+
+        # Assert initiates session
+        req = reqmock.request_history[0]
+        assert req.headers['Entity-Length'] == 4
+        assert req.text is None
+
+        # Assert uploads first chunk
+        req = reqmock.request_history[1]
+        assert req.headers['Content-Type'] == 'application/offset+octet-stream'
+        assert req.headers['Content-Length'] == '3'
+        assert req.headers['Offset'] == 0
+        assert req.text == 'dat'
+
+        # Assert uploads second chunk
+        req = reqmock.request_history[2]
+        assert req.headers['Content-Type'] == 'application/offset+octet-stream'
+        assert req.headers['Content-Length'] == '1'
+        assert req.headers['Offset'] == 3
+        assert req.text == 'a'
+
+        # Assert session committed
+        req = reqmock.request_history[3]
+        assert req.text is None
+
+        # Assert upload status checked
+        req = reqmock.request_history[4]
+        assert req.text is None
+
     def test_delete_data(self, reqmock):
         reqmock.delete('https://api/bars/abc123/data', status_code=201)
         Bar(id='abc123').delete_data()

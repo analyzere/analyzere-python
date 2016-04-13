@@ -238,11 +238,13 @@ class DataResource(Resource):
     def upload_data(self, file_or_str):
         """
         Accepts a file-like object or string and uploads it. Files are
-        automatically uploaded in 4mb chunks. Implements the tus protocol.
+        automatically uploaded in chunks. The default chunk size is 16MiB and
+        can be overwritten by specifying the number of bytes in the
+        ``analyzere.upload_chunk_size`` variable.
+        Implements the tus protocol.
         """
         file_obj = StringIO(file_or_str) if isinstance(
             file_or_str, six.string_types) else file_or_str
-        chunk_size = 4 * 1024 * 1024
         length = utils.file_length(file_obj)
 
         # Initiate upload session
@@ -251,7 +253,8 @@ class DataResource(Resource):
         })
 
         # Upload chunks
-        for chunk, offset in utils.read_in_chunks(file_obj, chunk_size):
+        for chunk, offset in utils.read_in_chunks(file_obj,
+                                                  analyzere.upload_chunk_size):
             headers = {'Offset': str(offset),
                        'Content-Type': 'application/offset+octet-stream'}
             request_raw('patch', self._data_path, headers=headers, body=chunk)
