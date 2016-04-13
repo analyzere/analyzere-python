@@ -245,12 +245,17 @@ class DataResource(Resource):
         """
         file_obj = StringIO(file_or_str) if isinstance(
             file_or_str, six.string_types) else file_or_str
-        length = utils.file_length(file_obj)
 
-        # Initiate upload session
-        request_raw('post', self._data_path, headers={
-            'Entity-Length': str(length)
-        })
+        # Upload file with known entity size if file object supports random
+        # access.
+        if hasattr(file_obj, 'seek'):
+            length = utils.file_length(file_obj)
+
+            # Initiate upload session
+            request_raw('post', self._data_path,
+                        headers={'Entity-Length': length})
+        else:
+            request_raw('post', self._data_path)
 
         # Upload chunks
         for chunk, offset in utils.read_in_chunks(file_obj,
