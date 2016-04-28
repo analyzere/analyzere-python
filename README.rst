@@ -57,14 +57,20 @@ Publishing
 2. Increment version number in ``setup.py`` according to
    `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_.
 
-3. Register the package::
+3. Commit your change to ``setup.py`` and create a tag for it with the version
+   number. e.g.::
+
+    git tag 0.5.1
+    git push origin 0.5.1
+
+4. Register the package::
 
     python setup.py register
 
-3. Package source and wheel distributions::
+5. Package source and wheel distributions::
 
     python setup.py sdist bdist_wheel
 
-4. Upload to PyPI with twine::
+6. Upload to PyPI with twine::
 
     twine upload dist/*
