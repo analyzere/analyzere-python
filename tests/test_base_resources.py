@@ -522,6 +522,17 @@ class TestMetricsResource(SetBaseUrl):
         r2 = Reference(href)
         assert r1 == r2
 
+    def test_back_allocation(self, reqmock):
+        reqmock.get(
+            'https://api/foo_views/abc123/back_allocations?source_id=321cba',
+            status_code=200,
+            text='{"layer_view": {"ref_id": "ba_layer_view"}}'
+        )
+        f = FooView(id='abc123')
+        with mock.patch('analyzere.LayerView.retrieve') as retrieve:
+            f.back_allocation("321cba")
+        retrieve.assert_called_once_with("ba_layer_view")
+
     # TODO: Add tests for id: None
 
 

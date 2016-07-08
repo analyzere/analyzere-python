@@ -318,6 +318,12 @@ class MetricsResource(Resource):
         return request_raw(
             'get', path, params=params, auto_retry=auto_retry).content
 
+    def back_allocation(self, source_id, auto_retry=True, **params):
+        params['source_id'] = source_id
+        path = '%s/back_allocations' % self._get_path(self.id)
+        data = request('get', path, auto_retry=auto_retry, params=params)
+        return convert_to_analyzere_object(data)
+
 
 class OptimizationResource(Resource):
     def result(self):
