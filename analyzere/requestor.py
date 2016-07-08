@@ -27,11 +27,13 @@ def handle_api_error(resp, code):
         raise errors.AuthenticationError(
             'Failed to authenticate. Please check the username and password '
             'you provided.', body, code, json_body)
+    elif code == 503:
+        raise errors.RetryAfter(message, body, code, json_body)
     else:
         raise errors.ServerError(message, body, code, json_body)
 
 
-def request(method, path, params=None, data=None):
+def request(method, path, params=None, data=None, auto_retry=True):
     """
     method - HTTP method. e.g. get, put, post, etc.
     path - Path to resource. e.g. /loss_sets/1234
@@ -46,7 +48,8 @@ def request(method, path, params=None, data=None):
         'accept': 'application/json',
         'content-type': 'application/json',
     }
-    resp = request_raw(method, path, params=params, body=body, headers=headers)
+    resp = request_raw(method, path, params=params, body=body, headers=headers,
+                       auto_retry=auto_retry)
     content = resp.text
     if content:
         try:
