@@ -277,39 +277,46 @@ class MetricsResource(Resource):
     """
     TODO: should the names of these functions be improved?
     """
-    def _get_metrics(self, path, params=None):
-        resp = request('get', path, params=params)
+    def _get_metrics(self, path, params=None, auto_retry=True):
+        resp = request('get', path, params=params, auto_retry=auto_retry)
         return convert_to_analyzere_object(resp)
 
-    def tail_metrics(self, probabilities, **params):
+    def tail_metrics(self, probabilities, auto_retry=True, **params):
         probabilities = vectorize(probabilities)
         path = '%s/tail_metrics/%s' % (self._get_path(self.id), probabilities)
-        return self._get_metrics(path, params)
+        return self._get_metrics(path, params, auto_retry=auto_retry)
 
-    def co_metrics(self, probabilities, **params):
+    def co_metrics(self, probabilities, auto_retry=True, **params):
         probabilities = vectorize(probabilities)
         path = '%s/co_metrics/%s' % (self._get_path(self.id), probabilities)
-        return self._get_metrics(path, params)
+        return self._get_metrics(path, params, auto_retry=auto_retry)
 
-    def el(self, **params):
+    def el(self, auto_retry=True, **params):
         path = '%s/el' % self._get_path(self.id)
-        return float(request('get', path, params=params))
+        return float(
+            request('get', path, params=params, auto_retry=auto_retry))
 
-    def ep(self, thresholds, **params):
+    def ep(self, thresholds, auto_retry=True, **params):
         thresholds = vectorize(thresholds)
         path = '%s/exceedance_probabilities/%s' % (self._get_path(self.id),
                                                    thresholds)
-        return self._get_metrics(path, params)
+        return self._get_metrics(path, params, auto_retry=auto_retry)
 
-    def tvar(self, probabilities, **params):
+    def tvar(self, probabilities, auto_retry=True, **params):
         probabilities = vectorize(probabilities)
         path = '%s/tvar/%s' % (self._get_path(self.id), probabilities)
-        resp = self._get_metrics(path, params)
+        resp = self._get_metrics(path, params, auto_retry=auto_retry)
         return resp if isinstance(resp, list) else float(resp)
 
-    def download_ylt(self, **params):
+    def download_ylt(self, auto_retry=True, **params):
         path = '%s/ylt' % self._get_path(self.id)
-        return request_raw('get', path, params=params).content
+        return request_raw(
+            'get', path, params=params, auto_retry=auto_retry).content
+
+    def download_yelt(self, auto_retry=True, **params):
+        path = '%s/yelt' % self._get_path(self.id)
+        return request_raw(
+            'get', path, params=params, auto_retry=auto_retry).content
 
 
 class OptimizationResource(Resource):

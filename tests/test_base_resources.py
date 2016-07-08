@@ -17,6 +17,7 @@ from analyzere.base_resources import (
     Resource,
     convert_to_analyzere_object
 )
+from analyzere.errors import RetryAfter
 
 
 class SetBaseUrl(object):
@@ -441,6 +442,28 @@ class TestMetricsResource(SetBaseUrl):
         assert tm[0].num == 1.0
         assert tm[1].num == 2.0
 
+    def test_ep_auto_retry_true(self, reqmock):
+        responses = [
+            {'status_code': 503, 'headers': {'Retry-After': '0.01'}},
+            {'status_code': 200, 'text': '{"num": 1.0}'}
+        ]
+        reqmock.get('https://api/foo_views/abc123/exceedance_probabilities/1',
+                    responses)
+        f = FooView(id='abc123')
+        assert f.ep(1, auto_retry=True).num == 1.0
+
+    def test_ep_auto_retry_false(self, reqmock):
+        responses = [
+            {'status_code': 503, 'headers': {'Retry-After': '0.01'}},
+            {'status_code': 200, 'text': '{"num": 1.0}'}
+        ]
+        reqmock.get('https://api/foo_views/abc123/exceedance_probabilities/1',
+                    responses)
+        f = FooView(id='abc123')
+        with pytest.raises(RetryAfter):
+            f.ep(1, auto_retry=False).num
+        assert f.ep(1, auto_retry=False).num == 1.0
+
     def test_tvar(self, reqmock):
         reqmock.get('https://api/foo_views/abc123/tvar/1.0', status_code=200,
                     text='1.0')
@@ -459,6 +482,32 @@ class TestMetricsResource(SetBaseUrl):
                     text='ylt-data')
         f = FooView(id='abc123')
         assert f.download_ylt() == b'ylt-data'
+
+    def test_download_yelt(self, reqmock):
+        reqmock.get('https://api/foo_views/abc123/yelt', status_code=200,
+                    text='yelt-data')
+        f = FooView(id='abc123')
+        assert f.download_yelt() == b'yelt-data'
+
+    def test_download_yelt_auto_retry_true(self, reqmock):
+        responses = [
+            {'status_code': 503, 'headers': {'Retry-After': '0.01'}},
+            {'status_code': 200, 'text': 'yelt-data'}
+        ]
+        reqmock.get('https://api/foo_views/abc123/yelt', responses)
+        f = FooView(id='abc123')
+        assert f.download_yelt() == b'yelt-data'
+
+    def test_download_yelt_auto_retry_false(self, reqmock):
+        responses = [
+            {'status_code': 503, 'headers': {'Retry-After': '0.01'}},
+            {'status_code': 200, 'text': 'yelt-data'}
+        ]
+        reqmock.get('https://api/foo_views/abc123/yelt', responses)
+        f = FooView(id='abc123')
+        with pytest.raises(RetryAfter):
+            f.download_yelt(auto_retry=False)
+        assert f.download_yelt(auto_retry=False) == b'yelt-data'
 
     def test_unknown_resource_equality(self, reqmock):
         reqmock.get('https://api/foo/abc123', status_code=200,

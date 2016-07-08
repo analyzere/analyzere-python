@@ -19,6 +19,10 @@ class AuthenticationError(AnalyzeReError):
     pass
 
 
+class RetryAfter(AnalyzeReError):
+    pass
+
+
 class MissingIdError(AnalyzeReError):
     def __init__(self, message=None):
         message = message or 'Object needs an id to complete this operation.'
