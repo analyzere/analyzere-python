@@ -522,6 +522,16 @@ class TestMetricsResource(SetBaseUrl):
         r2 = Reference(href)
         assert r1 == r2
 
+    def test_back_allocation(self, reqmock):
+        reqmock.get(
+            'https://api/foo_views/abc123/back_allocations?source_id=321cba',
+            status_code=200,
+            text='"response_object"'
+        )
+        f = FooView(id='abc123')
+        response = f.back_allocation("321cba")
+        assert response == "response_object"
+
     # TODO: Add tests for id: None
 
 
