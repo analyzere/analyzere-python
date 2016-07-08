@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 
 import pytest
+import mock
 
 import analyzere
 from analyzere import MissingIdError
@@ -450,7 +451,9 @@ class TestMetricsResource(SetBaseUrl):
         reqmock.get('https://api/foo_views/abc123/exceedance_probabilities/1',
                     responses)
         f = FooView(id='abc123')
-        assert f.ep(1, auto_retry=True).num == 1.0
+        with mock.patch('time.sleep') as sleep:
+            assert f.ep(1, auto_retry=True).num == 1.0
+        sleep.assert_called_once_with(0.01)
 
     def test_ep_auto_retry_false(self, reqmock):
         responses = [
@@ -496,7 +499,9 @@ class TestMetricsResource(SetBaseUrl):
         ]
         reqmock.get('https://api/foo_views/abc123/yelt', responses)
         f = FooView(id='abc123')
-        assert f.download_yelt() == b'yelt-data'
+        with mock.patch('time.sleep') as sleep:
+            assert f.download_yelt() == b'yelt-data'
+        sleep.assert_called_once_with(0.01)
 
     def test_download_yelt_auto_retry_false(self, reqmock):
         responses = [
