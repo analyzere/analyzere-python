@@ -368,14 +368,14 @@ class TestDataResource(SetBaseUrl):
 
         # Assert initiates session
         req = reqmock.request_history[0]
-        assert req.headers['Entity-Length'] == 4
+        assert req.headers['Entity-Length'] == '4'
         assert req.text is None
 
         # Assert uploads first chunk
         req = reqmock.request_history[1]
         assert req.headers['Content-Type'] == 'application/offset+octet-stream'
         assert req.headers['Content-Length'] == '4'
-        assert req.headers['Offset'] == 0
+        assert req.headers['Offset'] == '0'
         assert req.text == 'data'
 
         # Assert session committed
