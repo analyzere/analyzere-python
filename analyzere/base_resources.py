@@ -246,11 +246,13 @@ class DataResource(Resource):
         length = utils.file_length(file_obj)
 
         # Initiate upload session
-        request_raw('post', self._data_path, headers={'Entity-Length': length})
+        request_raw('post', self._data_path, headers={
+            'Entity-Length': str(length)
+        })
 
         # Upload chunks
         for chunk, offset in utils.read_in_chunks(file_obj, chunk_size):
-            headers = {'Offset': offset,
+            headers = {'Offset': str(offset),
                        'Content-Type': 'application/offset+octet-stream'}
             request_raw('patch', self._data_path, headers=headers, body=chunk)
 
