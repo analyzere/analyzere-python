@@ -378,6 +378,20 @@ class TestResource(SetBaseUrl):
         assert f.foo == 'baz'
         assert not hasattr(f, 'throwaway')
 
+    def test_reference_save(self, reqmock):
+        reqmock.get('https://api/foos/abc123', status_code=200,
+                    text='{"id": "abc123", "server_generated": "foo"}')
+        r = Reference('https://api/foos/abc123')
+        assert r.id == 'abc123'
+        assert r._id == 'abc123'
+
+        reqmock.put('https://api/foos/def123', status_code=200,
+                    text='{"id": "def123", "server_generated": "bar"}')
+        r.id = 'def123'
+        r.save()
+        assert r.id == r._id
+        assert r._href == 'https://api/foos/def123'
+
 
 class Bar(DataResource):
     pass

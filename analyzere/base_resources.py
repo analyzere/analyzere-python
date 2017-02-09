@@ -7,6 +7,7 @@ from lazy_object_proxy import Proxy
 import six
 import uuid
 from six import StringIO
+from six.moves.urllib.parse import urljoin
 
 import analyzere
 from analyzere import utils
@@ -32,7 +33,10 @@ class Reference(Proxy):
         self._href = href
 
         def resolve():
-            r = load_reference(collection_name, self._id)
+            r = load_reference(
+                collection_name,
+                super(Reference, self).__getattribute__('_id')
+            )
             self._resolved = True
             return r
 
@@ -47,6 +51,35 @@ class Reference(Proxy):
         if self._resolved:
             return copy.deepcopy(self.__wrapped__, memo)
         return Reference(self._href)
+
+    def __getattribute__(self, name):
+        # Check for class methods and attributes before intercepting Proxied
+        # methods and attributes.
+        if hasattr(Reference, name):
+            return super(Reference, self).__getattribute__(name)
+
+        attr = Proxy.__getattribute__(self, name)
+        # Intercept all proxied attributes and methods and attempt to update
+        # the Reference ._id and ._href attributes.
+
+        def update_ref(item):
+            try:
+                id_ = item.id
+                href_ = urljoin(analyzere.base_url, item._get_path(id_))
+                super(Reference, self).__setattr__('_id', id_)
+                super(Reference, self).__setattr__('_href', href_)
+            except AttributeError:
+                pass
+
+        if hasattr(attr, '__call__'):
+            def newfunc(*args, **kwargs):
+                retval = attr(*args, **kwargs)
+                update_ref(retval)
+                return retval
+            return newfunc
+        else:
+            update_ref(Proxy)
+            return attr
 
 
 def load_reference(collection_name, id_):
