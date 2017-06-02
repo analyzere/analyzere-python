@@ -161,7 +161,7 @@ class AnalyzeReObject(object):
         # Certainly not the most efficient hash, since anything without an ID
         # has the same hash value.
         if hasattr(self, 'id'):
-            int(uuid.UUID(self.id))
+            return int(uuid.UUID(self.id))
         return 0
 
 
