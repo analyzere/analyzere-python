@@ -4,6 +4,7 @@ import json
 
 import pytest
 import mock
+from six import StringIO
 
 import analyzere
 from analyzere import MissingIdError
@@ -27,6 +28,22 @@ class SetBaseUrl(object):
 
     def teardown_method(self, _):
         analyzere.base_url = ''
+
+
+class SequentialStreamWrapper(object):
+    """
+    Helper class to turn any file-like object into a stream from which can only
+    be sequentially read. That is, this object does not support ``seek`` and
+    ``tell`` operations for random access and stream positioning.
+    """
+    def __init__(self, file_obj):
+        self.file_obj = file_obj
+
+    def read(self, size=None):
+        if size is None:
+            return self.file_obj.read()
+        else:
+            return self.file_obj.read(size)
 
 
 class TestReferences(SetBaseUrl):
@@ -354,13 +371,8 @@ class TestDataResource(SetBaseUrl):
         f = Bar(id='abc123')
         assert f.download_data() == b'data'
 
-    def test_upload_data(self, reqmock):
-        reqmock.post('https://api/bars/abc123/data', status_code=201,
-                     text='data')
-        reqmock.patch('https://api/bars/abc123/data', status_code=204)
-        reqmock.post('https://api/bars/abc123/data/commit', status_code=204)
-        reqmock.get('https://api/bars/abc123/data/status', status_code=200,
-                    text='{"status": "Processing Successful"}')
+    def test_upload_data(self, mock_bar_request):
+        reqmock = mock_bar_request
 
         f = Bar(id='abc123')
         f.upload_data('data')
@@ -384,6 +396,117 @@ class TestDataResource(SetBaseUrl):
 
         # Assert upload status checked
         req = reqmock.request_history[3]
+        assert req.text is None
+
+    def test_upload_data_file(self, mock_bar_request):
+        reqmock = mock_bar_request
+
+        f = Bar(id='abc123')
+
+        # Create file object
+        file_obj = StringIO('data')
+
+        f.upload_data(file_obj)
+        assert reqmock.call_count == 4
+
+        # Assert initiates session
+        req = reqmock.request_history[0]
+        assert req.headers['Entity-Length'] == '4'
+        assert req.text is None
+
+        # Assert uploads first chunk
+        req = reqmock.request_history[1]
+        assert req.headers['Content-Type'] == 'application/offset+octet-stream'
+        assert req.headers['Content-Length'] == '4'
+        assert req.headers['Offset'] == '0'
+        assert req.text == 'data'
+
+        # Assert session committed
+        req = reqmock.request_history[2]
+        assert req.text is None
+
+        # Assert upload status checked
+        req = reqmock.request_history[3]
+        assert req.text is None
+
+    def test_upload_data_stream(self, mock_bar_request):
+        reqmock = mock_bar_request
+
+        f = Bar(id='abc123')
+
+        # Create file object
+        file_obj = SequentialStreamWrapper(StringIO('data'))
+
+        f.upload_data(file_obj)
+        assert reqmock.call_count == 4
+
+        # Assert initiates session
+        req = reqmock.request_history[0]
+        assert 'Entity-Length' not in req.headers
+        assert req.text is None
+
+        # Assert uploads first chunk
+        req = reqmock.request_history[1]
+        assert req.headers['Content-Type'] == 'application/offset+octet-stream'
+        assert req.headers['Content-Length'] == '4'
+        assert req.headers['Offset'] == '0'
+        assert req.text == 'data'
+
+        # Assert session committed
+        req = reqmock.request_history[2]
+        assert req.text is None
+
+        # Assert upload status checked
+        req = reqmock.request_history[3]
+        assert req.text is None
+
+    def test_upload_data_chunking(self, mock_bar_request):
+        reqmock = mock_bar_request
+
+        f = Bar(id='abc123')
+
+        # Create file object
+        file_obj = StringIO('data')
+
+        # Save original chunk size
+        orig_upload_chunk_size = analyzere.upload_chunk_size
+
+        # Set chunking to 3 bytes per chunk
+        analyzere.upload_chunk_size = 3
+
+        # Upload file
+        f.upload_data(file_obj)
+
+        # Reset original upload chunk size
+        analyzere.upload_chunk_size = orig_upload_chunk_size
+
+        assert reqmock.call_count == 5
+
+        # Assert initiates session
+        req = reqmock.request_history[0]
+        assert req.headers['Entity-Length'] == '4'
+        assert req.text is None
+
+        # Assert uploads first chunk
+        req = reqmock.request_history[1]
+        assert req.headers['Content-Type'] == 'application/offset+octet-stream'
+        assert req.headers['Content-Length'] == '3'
+        assert req.headers['Offset'] == '0'
+        assert req.text == 'dat'
+
+        # Assert uploads second chunk
+        req = reqmock.request_history[2]
+        assert req.headers['Content-Type'] == 'application/offset+octet-stream'
+        assert req.headers['Content-Length'] == '1'
+        assert req.headers['Offset'] == '3'
+        assert req.text == 'a'
+
+        # Assert session committed
+        req = reqmock.request_history[3]
+        assert req.text is None
+
+        # Assert upload status checked
+        req = reqmock.request_history[4]
         assert req.text is None
 
     def test_delete_data(self, reqmock):

@@ -2,6 +2,8 @@ username = ''
 password = ''
 base_url = 'http://localhost:8000/'
 upload_poll_interval = 0.1
+one_megabyte = 2**20
+upload_chunk_size = 16 * one_megabyte
 tls_verify = True
 
 from analyzere.resources import (  # noqa

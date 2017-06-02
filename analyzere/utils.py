@@ -66,12 +66,13 @@ def file_length(file_obj):
 
 def read_in_chunks(file_obj, chunk_size):
     """Generator to read a file piece by piece."""
+    offset = 0
     while True:
-        offset = file_obj.tell()
         data = file_obj.read(chunk_size)
         if not data:
             break
         yield data, offset
+        offset += len(data)
 
 
 def parse_href(href):
