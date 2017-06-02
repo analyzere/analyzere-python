@@ -4,6 +4,7 @@ import json
 
 import pytest
 import mock
+from six import StringIO
 
 import analyzere
 from analyzere import MissingIdError
@@ -30,11 +31,11 @@ class SetBaseUrl(object):
 
 
 class SequentialStreamWrapper(object):
-    '''
+    """
     Helper class to turn any file-like object into a stream from which can only
     be sequentially read. That is, this object does not support ``seek`` and
     ``tell`` operations for random access and stream positioning.
-    '''
+    """
     def __init__(self, file_obj):
         self.file_obj = file_obj
 
@@ -370,13 +371,8 @@ class TestDataResource(SetBaseUrl):
         f = Bar(id='abc123')
         assert f.download_data() == b'data'
 
-    def test_upload_data(self, reqmock):
-        reqmock.post('https://api/bars/abc123/data', status_code=201,
-                     text='data')
-        reqmock.patch('https://api/bars/abc123/data', status_code=204)
-        reqmock.post('https://api/bars/abc123/data/commit', status_code=204)
-        reqmock.get('https://api/bars/abc123/data/status', status_code=200,
-                    text='{"status": "Processing Successful"}')
+    def test_upload_data(self, mock_bar_request):
+        reqmock = mock_bar_request
 
         f = Bar(id='abc123')
         f.upload_data('data')
@@ -402,13 +398,8 @@ class TestDataResource(SetBaseUrl):
         req = reqmock.request_history[3]
         assert req.text is None
 
-    def test_upload_data_file(self, reqmock):
-        reqmock.post('https://api/bars/abc123/data', status_code=201,
-                     text='data')
-        reqmock.patch('https://api/bars/abc123/data', status_code=204)
-        reqmock.post('https://api/bars/abc123/data/commit', status_code=204)
-        reqmock.get('https://api/bars/abc123/data/status', status_code=200,
-                    text='{"status": "Processing Successful"}')
+    def test_upload_data_file(self, mock_bar_request):
+        reqmock = mock_bar_request
 
         f = Bar(id='abc123')
 
@@ -420,14 +411,14 @@ class TestDataResource(SetBaseUrl):
 
         # Assert initiates session
         req = reqmock.request_history[0]
-        assert req.headers['Entity-Length'] == 4
+        assert req.headers['Entity-Length'] == '4'
         assert req.text is None
 
         # Assert uploads first chunk
         req = reqmock.request_history[1]
         assert req.headers['Content-Type'] == 'application/offset+octet-stream'
         assert req.headers['Content-Length'] == '4'
-        assert req.headers['Offset'] == 0
+        assert req.headers['Offset'] == '0'
         assert req.text == 'data'
 
         # Assert session committed
@@ -438,13 +429,8 @@ class TestDataResource(SetBaseUrl):
         req = reqmock.request_history[3]
         assert req.text is None
 
-    def test_upload_data_stream(self, reqmock):
-        reqmock.post('https://api/bars/abc123/data', status_code=201,
-                     text='data')
-        reqmock.patch('https://api/bars/abc123/data', status_code=204)
-        reqmock.post('https://api/bars/abc123/data/commit', status_code=204)
-        reqmock.get('https://api/bars/abc123/data/status', status_code=200,
-                    text='{"status": "Processing Successful"}')
+    def test_upload_data_stream(self, mock_bar_request):
+        reqmock = mock_bar_request
 
         f = Bar(id='abc123')
 
@@ -463,7 +449,7 @@ class TestDataResource(SetBaseUrl):
         req = reqmock.request_history[1]
         assert req.headers['Content-Type'] == 'application/offset+octet-stream'
         assert req.headers['Content-Length'] == '4'
-        assert req.headers['Offset'] == 0
+        assert req.headers['Offset'] == '0'
         assert req.text == 'data'
 
         # Assert session committed
@@ -474,13 +460,8 @@ class TestDataResource(SetBaseUrl):
         req = reqmock.request_history[3]
         assert req.text is None
 
-    def test_upload_data_chunking(self, reqmock):
-        reqmock.post('https://api/bars/abc123/data', status_code=201,
-                     text='data')
-        reqmock.patch('https://api/bars/abc123/data', status_code=204)
-        reqmock.post('https://api/bars/abc123/data/commit', status_code=204)
-        reqmock.get('https://api/bars/abc123/data/status', status_code=200,
-                    text='{"status": "Processing Successful"}')
+    def test_upload_data_chunking(self, mock_bar_request):
+        reqmock = mock_bar_request
 
         f = Bar(id='abc123')
 
@@ -503,21 +484,21 @@ class TestDataResource(SetBaseUrl):
 
         # Assert initiates session
         req = reqmock.request_history[0]
-        assert req.headers['Entity-Length'] == 4
+        assert req.headers['Entity-Length'] == '4'
         assert req.text is None
 
         # Assert uploads first chunk
         req = reqmock.request_history[1]
         assert req.headers['Content-Type'] == 'application/offset+octet-stream'
         assert req.headers['Content-Length'] == '3'
-        assert req.headers['Offset'] == 0
+        assert req.headers['Offset'] == '0'
         assert req.text == 'dat'
 
         # Assert uploads second chunk
         req = reqmock.request_history[2]
         assert req.headers['Content-Type'] == 'application/offset+octet-stream'
         assert req.headers['Content-Length'] == '1'
-        assert req.headers['Offset'] == 3
+        assert req.headers['Offset'] == '3'
         assert req.text == 'a'
 
         # Assert session committed

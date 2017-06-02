@@ -253,7 +253,7 @@ class DataResource(Resource):
 
             # Initiate upload session
             request_raw('post', self._data_path,
-                        headers={'Entity-Length': length})
+                        headers={'Entity-Length': str(length)})
         else:
             request_raw('post', self._data_path)
 
