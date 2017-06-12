@@ -46,7 +46,7 @@ arguments to py.test through tox with ``--``. E.g.::
 
 See ``tox --help`` and ``py.test --help`` for more information.
 
-Publishing
+Tagging
 ----------
 
 1. Install `twine <https://pypi.python.org/pypi/twine>`_ and
@@ -63,14 +63,68 @@ Publishing
     git tag 0.5.1
     git push origin 0.5.1
 
-4. Register the package::
+``.pypirc`` file
+-----------------
 
-    python setup.py register
+Create a ``.pypirc`` file with your production and test server accounts in your
+``HOME`` directory. This file should look as follows:
 
-5. Package source and wheel distributions::
+::
+
+    [distutils]
+    index-servers=
+        pypi
+        testpypi
+
+    [testpypi]
+    repository = https://testpypi.python.org/pypi
+    username = <username>
+    password = <password>
+
+    [pypi]
+    repository = https://pypi.python.org/pypi
+    username = <username>
+    password = <password>
+
+
+Note that ``testpypi`` and ``pypi`` require separate registration.
+
+Testing Publication
+-----------------
+
+1. Ensure you have tagged the master repository according to the tagging
+instructions above.
+
+2. Register the package::
+
+    python setup.py register -r testpypi
+
+3. Package source and wheel distributions::
 
     python setup.py sdist bdist_wheel
 
-6. Upload to PyPI with twine::
+4. Upload to PyPI with twine::
 
-    twine upload dist/*
+    twine upload dist/* -r testpypi
+
+5. Test that you can install the package from testpypi::
+
+    pip install -i https://testpypi.python.org/pypi analyzere
+
+Publishing
+-----------
+
+1. Ensure you have tagged the master repository according to the tagging
+instructions above.
+
+2. Register the package::
+
+    python setup.py register -r pypi
+
+3. Package source and wheel distributions::
+
+    python setup.py sdist bdist_wheel
+
+4. Upload to PyPI with twine::
+
+    twine upload dist/* -r pypi
