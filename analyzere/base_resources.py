@@ -78,7 +78,6 @@ class Reference(Proxy):
                 return retval
             return newfunc
         else:
-            update_ref(Proxy)
             return attr
 
 

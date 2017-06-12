@@ -385,9 +385,14 @@ class TestResource(SetBaseUrl):
         assert r.id == 'abc123'
         assert r._id == 'abc123'
 
+        # check that _id and _href are not updated when simply calling an
+        # attribute.
         reqmock.put('https://api/foos/def123', status_code=200,
                     text='{"id": "def123", "server_generated": "bar"}')
         r.id = 'def123'
+        r.server_generated
+        assert r._id == 'abc123'
+
         r.save()
         assert r.id == r._id
         assert r._href == 'https://api/foos/def123'
