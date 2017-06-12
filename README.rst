@@ -66,9 +66,8 @@ Tagging
 ``.pypirc`` file
 -----------------
 
-To ensure publication and testing of publications are submitted to the correct
-servers (with credentials) create a ``.pypirc`` file in your ``HOME`` directory.
-This file should looks as follows:
+Create a ``.pypirc`` file with your production and test server accounts in your
+``HOME`` directory. This file should look as follows:
 
 ::
 
@@ -93,8 +92,8 @@ Note that ``testpypi`` and ``pypi`` require separate registration.
 Testing Publication
 -----------------
 
-1. Ensure you have tagged the master repository with the according to the
-tagging instructions above.
+1. Ensure you have tagged the master repository according to the tagging
+instructions above.
 
 2. Register the package::
 
@@ -115,8 +114,8 @@ tagging instructions above.
 Publishing
 -----------
 
-1. Ensure you have tagged the master repository with the according to the
-tagging instructions above.
+1. Ensure you have tagged the master repository according to the tagging
+instructions above.
 
 2. Register the package::
 
