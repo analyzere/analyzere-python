@@ -35,12 +35,12 @@ class Reference(Proxy):
         def resolve():
             r = load_reference(
                 collection_name,
-                super(Reference, self).__getattribute__('_id')
+                Proxy.__getattribute__(self, '_id')
             )
             self._resolved = True
             return r
 
-        super(Reference, self).__init__(resolve)
+        Proxy.__init__(self, resolve)
 
     def __copy__(self):
         if self._resolved:
@@ -55,10 +55,11 @@ class Reference(Proxy):
     def __getattribute__(self, name):
         # Check for class methods and attributes before intercepting Proxied
         # methods and attributes.
-        if hasattr(Reference, name):
-            return super(Reference, self).__getattribute__(name)
 
         attr = Proxy.__getattribute__(self, name)
+        if hasattr(Reference, name):
+            return attr
+
         # Intercept all proxied attributes and methods and attempt to update
         # the Reference ._id and ._href attributes.
 
@@ -66,8 +67,8 @@ class Reference(Proxy):
             try:
                 id_ = item.id
                 href_ = urljoin(analyzere.base_url, item._get_path(id_))
-                super(Reference, self).__setattr__('_id', id_)
-                super(Reference, self).__setattr__('_href', href_)
+                self._id = id_
+                self._href = href_
             except AttributeError:
                 pass
 
