@@ -468,17 +468,9 @@ class TestDataResource(SetBaseUrl):
         # Create file object
         file_obj = StringIO('data')
 
-        # Save original chunk size
-        orig_upload_chunk_size = analyzere.upload_chunk_size
-
         # Set chunking to 3 bytes per chunk
-        analyzere.upload_chunk_size = 3
-
         # Upload file
-        f.upload_data(file_obj)
-
-        # Reset original upload chunk size
-        analyzere.upload_chunk_size = orig_upload_chunk_size
+        f.upload_data(file_obj, chunk_size=3)
 
         assert reqmock.call_count == 5
 
