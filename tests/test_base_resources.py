@@ -535,19 +535,11 @@ class TestDataResource(SetBaseUrl):
                       upload_callback=upload_callback,
                       commit_callback=commit_callback)
 
-<<<<<<< HEAD
         assert reqmock.call_count == 13
         assert upload_callback.call_count == 11
         assert upload_callback.called_with(100.0)
         assert commit_callback.call_count == 1
         assert commit_callback.called_with(100.0)
-=======
-        assert reqmock.call_count == 7
-        assert upload_callback.call_count == 6
-        assert upload_callback == 100.0
-        assert commit_callback_count == 1
-        assert commit_callback_progress == 100.0
->>>>>>> code review
 
     def test_delete_data(self, reqmock):
         reqmock.delete('https://api/bars/abc123/data', status_code=201)
