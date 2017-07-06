@@ -1,3 +1,4 @@
+from __future__ import division
 import copy
 import json
 import time
@@ -15,7 +16,6 @@ from analyzere.utils import vectorize
 
 
 # Helpers
-
 class PaginatedCollection(list):
     def __init__(self, items, meta):
         super(PaginatedCollection, self).__init__(items)
@@ -244,6 +244,9 @@ class DataResource(Resource):
         can be overwritten by specifying the number of bytes in the
         ``chunk_size`` variable.
         Implements the tus protocol.
+        Takes optional callbacks that return the percentage complete for the
+        given "phase" of upload: upload/commit.
+        Callback values are returned as 10.0 for 10%
         """
         if not callable(upload_callback):
             raise Exception('provided upload_callback is not callable')
@@ -272,7 +275,7 @@ class DataResource(Resource):
             request_raw('patch', self._data_path, headers=headers, body=chunk)
             # if there is a known size, and an upload callback, call it
             if length:
-                upload_callback(offset/length)
+                upload_callback((offset/length) * 100.0)
 
         upload_callback(100.0)
         # Commit the session
