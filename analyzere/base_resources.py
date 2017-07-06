@@ -235,7 +235,9 @@ class DataResource(Resource):
         resp = request('get', self._status_path)
         return convert_to_analyzere_object(resp)
 
-    def upload_data(self, file_or_str, chunk_size=analyzere.upload_chunk_size):
+    def upload_data(self, file_or_str, chunk_size=analyzere.upload_chunk_size,
+                    upload_callback=lambda x: None,
+                    commit_callback=lambda x: None):
         """
         Accepts a file-like object or string and uploads it. Files are
         automatically uploaded in chunks. The default chunk size is 16MiB and
@@ -243,11 +245,17 @@ class DataResource(Resource):
         ``chunk_size`` variable.
         Implements the tus protocol.
         """
+        if not callable(upload_callback):
+            raise Exception('provided upload_callback is not callable')
+        if not callable(commit_callback):
+            raise Exception('provided commit_callback is not callable')
+
         file_obj = StringIO(file_or_str) if isinstance(
             file_or_str, six.string_types) else file_or_str
 
         # Upload file with known entity size if file object supports random
         # access.
+        length = None
         if hasattr(file_obj, 'seek'):
             length = utils.file_length(file_obj)
 
@@ -262,7 +270,11 @@ class DataResource(Resource):
             headers = {'Offset': str(offset),
                        'Content-Type': 'application/offset+octet-stream'}
             request_raw('patch', self._data_path, headers=headers, body=chunk)
+            # if there is a known size, and an upload callback, call it
+            if length:
+                upload_callback(offset/length)
 
+        upload_callback(100.0)
         # Commit the session
         request_raw('post', self._commit_path)
 
@@ -271,8 +283,10 @@ class DataResource(Resource):
             resp = self.upload_status
             if (resp.status == 'Processing Successful' or
                     resp.status == 'Processing Failed'):
+                commit_callback(100.0)
                 return resp
             else:
+                commit_callback(float(resp.commit_progress))
                 time.sleep(analyzere.upload_poll_interval)
 
     def download_data(self):

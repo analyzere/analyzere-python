@@ -365,6 +365,7 @@ class Bar(DataResource):
 
 
 class TestDataResource(SetBaseUrl):
+
     def test_download(self, reqmock):
         reqmock.get('https://api/bars/abc123/data', status_code=200,
                     text='data')
@@ -500,6 +501,53 @@ class TestDataResource(SetBaseUrl):
         # Assert upload status checked
         req = reqmock.request_history[4]
         assert req.text is None
+
+    def test_upload_data_chunking_bad_callbacks(self, mock_bar_request):
+        f = Bar(id='abc123')
+
+        # Create file object
+        file_obj = StringIO('data')
+
+        # call with bad callbacks
+        with pytest.raises(Exception) as e:
+            f.upload_data(file_obj, chunk_size=1,
+                          upload_callback='callback')
+        assert str(e.value) == 'provided upload_callback is not callable'
+
+        with pytest.raises(Exception) as e:
+            f.upload_data(file_obj, chunk_size=1,
+                          commit_callback='callback')
+        assert str(e.value) == 'provided commit_callback is not callable'
+
+    def test_upload_data_chunking_callbacks(self, mock_bar_request):
+        reqmock = mock_bar_request
+        upload_callback = mock.Mock()
+        commit_callback = mock.Mock()
+
+        f = Bar(id='abc123')
+
+        # Create file object of 10 bytes
+        file_obj = StringIO('1234567890')
+
+        # Set chunking to 1 byte per chunk == 10 chunks
+        # Upload file
+        f.upload_data(file_obj, chunk_size=1,
+                      upload_callback=upload_callback,
+                      commit_callback=commit_callback)
+
+<<<<<<< HEAD
+        assert reqmock.call_count == 13
+        assert upload_callback.call_count == 11
+        assert upload_callback.called_with(100.0)
+        assert commit_callback.call_count == 1
+        assert commit_callback.called_with(100.0)
+=======
+        assert reqmock.call_count == 7
+        assert upload_callback.call_count == 6
+        assert upload_callback == 100.0
+        assert commit_callback_count == 1
+        assert commit_callback_progress == 100.0
+>>>>>>> code review
 
     def test_delete_data(self, reqmock):
         reqmock.delete('https://api/bars/abc123/data', status_code=201)
