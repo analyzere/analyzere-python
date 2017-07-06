@@ -236,6 +236,7 @@ class DataResource(Resource):
         return convert_to_analyzere_object(resp)
 
     def upload_data(self, file_or_str, chunk_size=analyzere.upload_chunk_size,
+                    poll_interval=analyzere.upload_poll_interval,
                     upload_callback=lambda x: None,
                     commit_callback=lambda x: None):
         """
@@ -243,6 +244,8 @@ class DataResource(Resource):
         automatically uploaded in chunks. The default chunk size is 16MiB and
         can be overwritten by specifying the number of bytes in the
         ``chunk_size`` variable.
+        Accepts an optional poll_interval for temporarily overriding the
+        default value `analyzere.upload_poll_interval`.
         Implements the tus protocol.
         Takes optional callbacks that return the percentage complete for the
         given "phase" of upload: upload/commit.
@@ -290,7 +293,7 @@ class DataResource(Resource):
                 return resp
             else:
                 commit_callback(float(resp.commit_progress))
-                time.sleep(analyzere.upload_poll_interval)
+                time.sleep(poll_interval)
 
     def download_data(self):
         return request_raw('get', self._data_path).content

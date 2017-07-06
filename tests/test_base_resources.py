@@ -502,6 +502,15 @@ class TestDataResource(SetBaseUrl):
         req = reqmock.request_history[4]
         assert req.text is None
 
+    def test_upload_data_chunking_poll_interval(self, mock_bar_request):
+        f = Bar(id='abc123')
+
+        # Create file object
+        file_obj = StringIO('data')
+
+        # call with poll_interval
+        f.upload_data(file_obj, poll_interval=1.0)
+
     def test_upload_data_chunking_bad_callbacks(self, mock_bar_request):
         f = Bar(id='abc123')
 
