@@ -537,9 +537,16 @@ class TestDataResource(SetBaseUrl):
 
         assert reqmock.call_count == 13
         assert upload_callback.call_count == 11
-        assert upload_callback.called_with(100.0)
+        # we expect calls for: 0.0, 10.0 ... 90.0,100.0
+        expected_calls = [p*10.0 for p in range(11)]
+        actual_calls = [c[0][0] for c in upload_callback.call_args_list]
+        assert expected_calls == actual_calls
+
         assert commit_callback.call_count == 1
-        assert commit_callback.called_with(100.0)
+        # we only expect a single call: 100.0
+        expected_calls = [100.0]
+        actual_calls = [c[0][0] for c in commit_callback.call_args_list]
+        assert expected_calls == actual_calls
 
     def test_delete_data(self, reqmock):
         reqmock.delete('https://api/bars/abc123/data', status_code=201)
