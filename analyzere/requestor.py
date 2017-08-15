@@ -33,13 +33,13 @@ def handle_api_error(resp, code):
         raise errors.ServerError(message, body, code, json_body)
 
 
-def request(method, path, params=None, headers={}, data=None,
+def request(method, path, params=None, headers=None, data=None,
             auto_retry=True):
     """
     method - HTTP method. e.g. get, put, post, etc.
     path - Path to resource. e.g. /loss_sets/1234
     params - Parameter to pass in the query string
-    headers - Additional HTTP headers
+    headers - Dictionary of additional HTTP headers
     data - Dictionary of parameters to pass in the request body
     """
     body = None
