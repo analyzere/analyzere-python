@@ -33,7 +33,7 @@ def handle_api_error(resp, code):
         raise errors.ServerError(message, body, code, json_body)
 
 
-def request(method, path, params=None, headers={}, data=None, 
+def request(method, path, params=None, headers={}, data=None,
             auto_retry=True):
     """
     method - HTTP method. e.g. get, put, post, etc.
@@ -48,7 +48,7 @@ def request(method, path, params=None, headers={}, data=None,
 
     # append the default set of headers to any user provided headers
     if headers:
-        headers['accept']= 'application/json'
+        headers['accept'] = 'application/json'
         headers['content-type'] = 'application/json'
     else:
         headers = {
