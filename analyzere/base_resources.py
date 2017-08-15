@@ -116,6 +116,9 @@ def to_dict(value):
 
 class AnalyzeReObject(object):
     def __init__(self, **kwargs):
+        type_value = kwargs.get('_type', None)
+        if type_value:
+            self.__dict__['type'] = type_value
         self.__dict__.update(kwargs)
 
     def __str__(self):
