@@ -33,21 +33,28 @@ def handle_api_error(resp, code):
         raise errors.ServerError(message, body, code, json_body)
 
 
-def request(method, path, params=None, data=None, auto_retry=True):
+def request(method, path, params=None, headers={}, data=None, 
+            auto_retry=True):
     """
     method - HTTP method. e.g. get, put, post, etc.
     path - Path to resource. e.g. /loss_sets/1234
     params - Parameter to pass in the query string
+    headers - Additional HTTP headers
     data - Dictionary of parameters to pass in the request body
     """
     body = None
     if data is not None:
         body = json.dumps(data, cls=utils.DateTimeEncoder)
 
-    headers = {
-        'accept': 'application/json',
-        'content-type': 'application/json',
-    }
+    # append the default set of headers to any user provided headers
+    if headers:
+        headers['accept']= 'application/json'
+        headers['content-type'] = 'application/json'
+    else:
+        headers = {
+            'accept': 'application/json',
+            'content-type': 'application/json',
+        }
     resp = request_raw(method, path, params=params, body=body, headers=headers,
                        auto_retry=auto_retry)
     content = resp.text
