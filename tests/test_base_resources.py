@@ -20,6 +20,7 @@ from analyzere.base_resources import (
     convert_to_analyzere_object
 )
 from analyzere.errors import RetryAfter
+import uuid
 
 
 class SetBaseUrl(object):
@@ -135,6 +136,23 @@ class TestAnalyzeReObject:
         a = AnalyzeReObject(foo='bar', baz='qux')
         assert (repr(a) == '<AnalyzeReObject at %s> JSON: {\n  '
                            '"baz": "qux",\n  "foo": "bar"\n}' % hex(id(a)))
+
+    def test_hash(self):
+        common_id = str(uuid.uuid4())
+        different_id = str(uuid.uuid4())
+
+        compare_object = AnalyzeReObject(id=common_id, foo='bar', baz='qux')
+        no_id_object = AnalyzeReObject(foo='bar', baz='qux')
+        different_id_object = AnalyzeReObject(id=different_id, foo='bar',
+                                              baz='qux')
+        same_id_object = AnalyzeReObject(id=common_id, foo='bar', baz='qux')
+        invalid_uuid_object = AnalyzeReObject(id='not-a-uuid', foo='bar',
+                                              baz='qux')
+
+        assert compare_object.__hash__() != no_id_object.__hash__()
+        assert compare_object.__hash__() != different_id_object.__hash__()
+        assert compare_object.__hash__() == same_id_object.__hash__()
+        assert compare_object.__hash__() != invalid_uuid_object.__hash__()
 
 
 class TestAnalyzeReObjectToDict:

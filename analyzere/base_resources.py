@@ -160,8 +160,13 @@ class AnalyzeReObject(object):
     def __hash__(self):
         # Certainly not the most efficient hash, since anything without an ID
         # has the same hash value.
-        if hasattr(self, 'id'):
-            int(uuid.UUID(self.id))
+        _id = getattr(self, 'id', None)
+        if not _id:
+            return 0
+        try:
+            return int(uuid.UUID(_id))
+        except (ValueError, TypeError):
+            pass
         return 0
 
 
