@@ -110,7 +110,8 @@ class TestReferences(SetBaseUrl):
 
 class TestAnalyzeReObject:
     def test_initialize_from_kwargs(self):
-        a = AnalyzeReObject(foo='bar', baz='qux')
+        a = AnalyzeReObject(_type='sometype', foo='bar', baz='qux')
+        assert a.type == 'sometype'
         assert a.foo == 'bar'
         assert a.baz == 'qux'
 
