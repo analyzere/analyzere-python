@@ -2,11 +2,13 @@ from __future__ import division
 import copy
 import json
 import time
+from inspect import isclass
 
 from lazy_object_proxy import Proxy
 import six
 import uuid
 from six import StringIO
+from six.moves.urllib.parse import urljoin
 
 import analyzere
 from analyzere import utils
@@ -32,11 +34,14 @@ class Reference(Proxy):
         self._href = href
 
         def resolve():
-            r = load_reference(collection_name, self._id)
+            r = load_reference(
+                collection_name,
+                Proxy.__getattribute__(self, '_id')
+            )
             self._resolved = True
             return r
 
-        super(Reference, self).__init__(resolve)
+        Proxy.__init__(self, resolve)
 
     def __copy__(self):
         if self._resolved:
@@ -47,6 +52,43 @@ class Reference(Proxy):
         if self._resolved:
             return copy.deepcopy(self.__wrapped__, memo)
         return Reference(self._href)
+
+    def __getattribute__(self, name):
+        # To see if name is an instanced attribute of Reference. Here we can
+        # check the names of the class attributes and then return the instance
+        # attribute with the same name.
+
+        attr = Proxy.__getattribute__(self, name)
+        if hasattr(Reference, name):
+            return attr
+
+        # Intercept all proxied attributes and methods and attempt to update
+        # the Reference ._id and ._href attributes.
+
+        def update_ref(item):
+            try:
+                id_ = item.id
+                href_ = urljoin(analyzere.base_url, item._get_path(id_))
+                self._id = id_
+                self._href = href_
+            except AttributeError:
+                pass
+
+        # Check to see if the attribute is a method that is being called.
+        if hasattr(attr, '__call__'):
+            # Intercept class method for the Resources, as they should not be
+            # able to update the _id and _href for a reference. Class methods
+            # should never update an instance in place.
+            if isclass(attr.__self__) and issubclass(attr.__self__, Resource):
+                return attr
+
+            def newfunc(*args, **kwargs):
+                retval = attr(*args, **kwargs)
+                update_ref(retval)
+                return retval
+            return newfunc
+        else:
+            return attr
 
 
 def load_reference(collection_name, id_):

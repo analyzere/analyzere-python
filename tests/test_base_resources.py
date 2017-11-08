@@ -378,6 +378,70 @@ class TestResource(SetBaseUrl):
         assert f.foo == 'baz'
         assert not hasattr(f, 'throwaway')
 
+    def test_reference_save(self, reqmock):
+        reqmock.get('https://api/foos/abc123', status_code=200,
+                    text='{"id": "abc123", "server_generated": "foo"}')
+        r = Reference('https://api/foos/abc123')
+        assert r.id == 'abc123'
+        assert r._id == 'abc123'
+
+        # Check to ensure Class attribute is not touched.
+        assert Reference._id is None
+        assert Reference._href is None
+        assert Reference._resolved is False
+
+        # check that _id and _href are not updated when simply calling an
+        # attribute.
+        reqmock.put('https://api/foos/def123', status_code=200,
+                    text='{"id": "def123", "server_generated": "bar"}')
+        r.id = 'def123'
+        r.server_generated
+        assert r._id == 'abc123'
+        assert Reference._id is None
+        assert Reference._href is None
+        assert Reference._resolved is False
+
+        r.save()
+        assert r.id == r._id
+        assert r._href == 'https://api/foos/def123'
+        assert Reference._id is None
+        assert Reference._href is None
+        assert Reference._resolved is False
+
+    def test_reference_retrieve(self, reqmock):
+        reqmock.get('https://api/foos/abc123', status_code=200,
+                    text='{"id": "abc123", "server_generated": "foo"}')
+        r = Reference('https://api/foos/abc123')
+        assert r.id == 'abc123'
+        assert r._id == 'abc123'
+
+        # The retrieve method should not result in a change to the _id or _href
+        # attributes
+        reqmock.get('https://api/foos/def123', status_code=200,
+                    text='{"id": "def123", "server_generated": "bar"}')
+        r.retrieve('def123')
+        assert r._id == 'abc123'
+        assert r._href == 'https://api/foos/abc123'
+
+    def test_reference_reload(self, reqmock):
+        reqmock.get('https://api/foos/abc123', status_code=200,
+                    text='{"id": "abc123", "server_generated": "foo"}')
+        r = Reference('https://api/foos/abc123')
+        assert r.id == 'abc123'
+        assert r._id == 'abc123'
+
+        # The retrieve method should not result in a change to the _id or _href
+        # attributes
+        reqmock.get('https://api/foos/def123', status_code=200,
+                    text='{"id": "def123", "server_generated": "bar"}')
+        r.id = 'def123'
+        r.reload()
+        assert r._id == 'def123'
+        assert r._href == 'https://api/foos/def123'
+        assert Reference._id is None
+        assert Reference._href is None
+        assert Reference._resolved is False
+
 
 class Bar(DataResource):
     pass
