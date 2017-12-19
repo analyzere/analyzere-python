@@ -57,7 +57,10 @@ Tagging
 2. Increment version number in ``setup.py`` according to
    `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_.
 
-3. Commit your change to ``setup.py`` and create a tag for it with the version
+3. Increment the version number in the ``user_agent`` variable in
+   ``analyzere/__init__.py``.
+
+4. Commit your change to ``setup.py`` and create a tag for it with the version
    number. e.g.::
 
     git tag 0.5.1

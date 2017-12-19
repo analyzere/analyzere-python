@@ -63,6 +63,12 @@ class TestRequest:
     def teardown_method(self, _):
         analyzere.base_url = ''
 
+    def test_request_user_agent(self, reqmock):
+        reqmock.post('https://api/bar', status_code=201)
+        request('post', 'bar', data=None)
+        assert (reqmock.last_request.headers['User-Agent'] ==
+                analyzere.user_agent)
+
     def test_request_serialized(self, reqmock):
         reqmock.post('https://api/bar', status_code=201)
         request('post', 'bar', data={'foo': 'bar'})
