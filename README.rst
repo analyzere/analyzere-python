@@ -24,7 +24,7 @@ documentation.
 Testing
 -------
 
-We currently commit to being compatible with Python 2.7 and Python 3.4. In
+We currently commit to being compatible with Python 2.7. 3.4, 3.5, and 3.6. In
 order to run tests against against each environment we use
 `tox <http://tox.readthedocs.org/>`_ and `py.test <http://pytest.org/>`_. You'll
 need an interpreter installed for each of the versions of Python we test.
