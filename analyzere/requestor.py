@@ -47,6 +47,7 @@ def request(method, path, params=None, data=None, auto_retry=True):
     headers = {
         'accept': 'application/json',
         'content-type': 'application/json',
+        'user-agent': analyzere.user_agent,
     }
     resp = request_raw(method, path, params=params, body=body, headers=headers,
                        auto_retry=auto_retry)
