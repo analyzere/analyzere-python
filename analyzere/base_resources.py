@@ -328,7 +328,7 @@ class DataResource(Resource):
             request_raw('patch', self._data_path, headers=headers, body=chunk)
             # if there is a known size, and an upload callback, call it
             if length:
-                upload_callback((offset/length) * 100.0)
+                upload_callback((offset / length) * 100.0)
 
         upload_callback(100.0)
         # Commit the session
