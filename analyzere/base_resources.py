@@ -262,6 +262,10 @@ class Resource(AnalyzeReObject):
         self.update(self.retrieve(id_))
         return self
 
+    def reference(self):
+        id_ = getattr(self, 'id', None)
+        return Reference(urljoin(analyzere.base_url, self._get_path(id_)))
+
 
 class EmbeddedResource(AnalyzeReObject):
     pass
