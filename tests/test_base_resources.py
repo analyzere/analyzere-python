@@ -630,7 +630,7 @@ class TestDataResource(SetBaseUrl):
         assert reqmock.call_count == 13
         assert upload_callback.call_count == 11
         # we expect calls for: 0.0, 10.0 ... 90.0,100.0
-        expected_calls = [p*10.0 for p in range(11)]
+        expected_calls = [p * 10.0 for p in range(11)]
         actual_calls = [c[0][0] for c in upload_callback.call_args_list]
         assert expected_calls == actual_calls
 
