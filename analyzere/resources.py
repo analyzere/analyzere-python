@@ -4,7 +4,10 @@ from analyzere.base_resources import (
     MetricsResource,
     OptimizationResource,
     Resource,
+    load_reference,
+    to_dict,
 )
+from analyzere.requestor import request
 
 
 # Shared embedded resources
@@ -106,7 +109,14 @@ class AnalysisProfile(Resource):
 # Portfolio views
 
 class PortfolioView(MetricsResource):
-    pass
+    def marginal(self, layer_views_to_add, layer_views_to_remove):
+        path = 'portfolio_view_marginals'
+        data = request('post', path, data={
+            'portfolio_view_id': to_dict(self.reference()),
+            'add_layer_view_ids': [to_dict(lv.reference()) for lv in layer_views_to_add],
+            'remove_layer_view_ids': [to_dict(lv.reference()) for lv in layer_views_to_remove]
+        })
+        return load_reference('portfolio_views', data['portfolio_view']['ref_id'])
 
 
 class DynamicPortfolioView(MetricsResource):
