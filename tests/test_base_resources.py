@@ -344,7 +344,17 @@ class TestResource(SetBaseUrl):
 
         # With query params
         Foo.list(foo='bar')
-        assert reqmock.last_request.query == 'foo=bar'
+        assert len(reqmock.last_request.qs) == 1
+        assert reqmock.last_request.qs['foo'] == ['bar']
+
+        Foo.list(quux='baz,qux')
+        assert len(reqmock.last_request.qs) == 1
+        assert reqmock.last_request.qs['quux'] == ['baz,qux']
+
+        Foo.list(foo='bar', quux='baz,qux')
+        assert len(reqmock.last_request.qs) == 2
+        assert reqmock.last_request.qs['foo'] == ['bar']
+        assert reqmock.last_request.qs['quux'] == ['baz,qux']
 
     def test_save_new(self, reqmock):
         reqmock.post('https://api/foos/', status_code=200,
