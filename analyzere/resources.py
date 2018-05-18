@@ -1,6 +1,7 @@
 from analyzere.base_resources import (
     DataResource,
     EmbeddedResource,
+    EventCatalogResource,
     MetricsResource,
     OptimizationResource,
     Resource,
@@ -20,7 +21,7 @@ class MonetaryUnit(EmbeddedResource):
 
 # Event catalogs
 
-class EventCatalog(DataResource):
+class EventCatalog(EventCatalogResource):
     pass
 
 

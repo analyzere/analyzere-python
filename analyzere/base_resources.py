@@ -408,6 +408,13 @@ class MetricsResource(Resource):
         return convert_to_analyzere_object(data)
 
 
+class EventCatalogResource(DataResource):
+    def profile(self):
+        path = '%s/profile' % self._get_path(self.id)
+        resp = request('get', path)
+        return convert_to_analyzere_object(resp)
+
+
 class OptimizationResource(Resource):
     def result(self):
         path = '%s/result' % self._get_path(self.id)
