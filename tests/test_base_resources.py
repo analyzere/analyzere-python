@@ -674,6 +674,19 @@ class TestMetricsResource(SetBaseUrl):
         assert tm[0].num == 1.0
         assert tm[1].num == 2.0
 
+    def test_window_metrics(self, reqmock):
+        reqmock.get('https://api/foo_views/abc123/window_metrics/0.0_1.0',
+                    status_code=200, text='{"num": 1.0}')
+        f = FooView(id='abc123')
+        assert f.window_metrics((0.0, 1.0)).num == 1.0
+
+        reqmock.get('https://api/foo_views/abc123/window_metrics/0.0_0.5,0.0_1.0',
+                    status_code=200, text='[{"num": 1.0}, {"num": 2.0}]')
+        wm = f.window_metrics([(0.0, 0.5), (0.0, 1.0)])
+        assert len(wm) == 2
+        assert wm[0].num == 1.0
+        assert wm[1].num == 2.0
+
     def test_co_metrics(self, reqmock):
         reqmock.get('https://api/foo_views/abc123/co_metrics/1.0',
                     status_code=200, text='{"num": 1.0}')
@@ -686,6 +699,19 @@ class TestMetricsResource(SetBaseUrl):
         assert len(tm) == 2
         assert tm[0].num == 1.0
         assert tm[1].num == 2.0
+
+    def test_window_co_metrics(self, reqmock):
+        reqmock.get('https://api/foo_views/abc123/window_co_metrics/0.0_1.0',
+                    status_code=200, text='{"num": 1.0}')
+        f = FooView(id='abc123')
+        assert f.window_co_metrics((0.0, 1.0)).num == 1.0
+
+        reqmock.get('https://api/foo_views/abc123/window_co_metrics/0.0_0.5,0.0_1.0',
+                    status_code=200, text='[{"num": 1.0}, {"num": 2.0}]')
+        wm = f.window_co_metrics([(0.0, 0.5), (0.0, 1.0)])
+        assert len(wm) == 2
+        assert wm[0].num == 1.0
+        assert wm[1].num == 2.0
 
     def test_el(self, reqmock):
         reqmock.get('https://api/foo_views/abc123/el', status_code=200,
@@ -743,6 +769,19 @@ class TestMetricsResource(SetBaseUrl):
         assert len(tm) == 2
         assert tm[0].num == 1.0
         assert tm[1].num == 2.0
+
+    def test_window_var(self, reqmock):
+        reqmock.get('https://api/foo_views/abc123/window_var/0.0_1.0', status_code=200,
+                    text='{"num": 1.0}')
+        f = FooView(id='abc123')
+        assert f.window_var((0.0, 1.0)).num == 1.0
+
+        reqmock.get('https://api/foo_views/abc123/window_var/0.0_0.5,0.0_1.0',
+                    status_code=200, text='[{"num": 1.0}, {"num": 2.0}]')
+        wm = f.window_var([(0.0, 0.5), (0.0, 1.0)])
+        assert len(wm) == 2
+        assert wm[0].num == 1.0
+        assert wm[1].num == 2.0
 
     def test_download_ylt(self, reqmock):
         reqmock.get('https://api/foo_views/abc123/ylt', status_code=200,

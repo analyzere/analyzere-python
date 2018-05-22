@@ -14,7 +14,7 @@ import analyzere
 from analyzere import utils
 from analyzere.errors import MissingIdError
 from analyzere.requestor import request, request_raw
-from analyzere.utils import vectorize
+from analyzere.utils import vectorize, vectorize_range
 
 
 # Helpers
@@ -369,9 +369,19 @@ class MetricsResource(Resource):
         path = '%s/tail_metrics/%s' % (self._get_path(self.id), probabilities)
         return self._get_metrics(path, params, auto_retry=auto_retry)
 
+    def window_metrics(self, probabilities, auto_retry=True, **params):
+        probabilities = vectorize_range(probabilities)
+        path = '%s/window_metrics/%s' % (self._get_path(self.id), probabilities)
+        return self._get_metrics(path, params, auto_retry=auto_retry)
+
     def co_metrics(self, probabilities, auto_retry=True, **params):
         probabilities = vectorize(probabilities)
         path = '%s/co_metrics/%s' % (self._get_path(self.id), probabilities)
+        return self._get_metrics(path, params, auto_retry=auto_retry)
+
+    def window_co_metrics(self, probabilities, auto_retry=True, **params):
+        probabilities = vectorize_range(probabilities)
+        path = '%s/window_co_metrics/%s' % (self._get_path(self.id), probabilities)
         return self._get_metrics(path, params, auto_retry=auto_retry)
 
     def el(self, auto_retry=True, **params):
@@ -388,8 +398,12 @@ class MetricsResource(Resource):
     def tvar(self, probabilities, auto_retry=True, **params):
         probabilities = vectorize(probabilities)
         path = '%s/tvar/%s' % (self._get_path(self.id), probabilities)
-        resp = self._get_metrics(path, params, auto_retry=auto_retry)
-        return resp if isinstance(resp, list) else float(resp)
+        return self._get_metrics(path, params, auto_retry=auto_retry)
+
+    def window_var(self, probabilities, auto_retry=True, **params):
+        probabilities = vectorize_range(probabilities)
+        path = '%s/window_var/%s' % (self._get_path(self.id), probabilities)
+        return self._get_metrics(path, params, auto_retry=auto_retry)
 
     def download_ylt(self, auto_retry=True, **params):
         path = '%s/ylt' % self._get_path(self.id)
