@@ -109,4 +109,4 @@ def test_vectorize_range_invalid():
     x = [1, 2, 3]
     with pytest.raises(Exception) as e:
         utils.vectorize_range(x)
-    assert str(e.value) == 'values must be a tuple or list of tuples'
+    assert str(e.value) == 'Items in the list must be tuples'
