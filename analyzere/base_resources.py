@@ -172,9 +172,9 @@ class AnalyzeReObject(object):
 
         id_ = getattr(self, 'id', None)
         if id_:
-            ident_parts.append('id=%s' % id_)
+            ident_parts.append('id={}'.format(id_))
 
-        repr_str = '<%s at %s> JSON: %s' % (
+        repr_str = '<{} at {}> JSON: {}'.format(
             ' '.join(ident_parts), hex(id(self)), str(self))
 
         return repr_str
@@ -366,64 +366,63 @@ class MetricsResource(Resource):
 
     def tail_metrics(self, probabilities, auto_retry=True, **params):
         probabilities = vectorize(probabilities)
-        path = '%s/tail_metrics/%s' % (self._get_path(self.id), probabilities)
+        path = '{}/tail_metrics/{}'.format(self._get_path(self.id), probabilities)
         return self._get_metrics(path, params, auto_retry=auto_retry)
 
     def window_metrics(self, probabilities, auto_retry=True, **params):
         probabilities = vectorize_range(probabilities)
-        path = '%s/window_metrics/%s' % (self._get_path(self.id), probabilities)
+        path = '{}/window_metrics/{}'.format(self._get_path(self.id), probabilities)
         return self._get_metrics(path, params, auto_retry=auto_retry)
 
     def co_metrics(self, probabilities, auto_retry=True, **params):
         probabilities = vectorize(probabilities)
-        path = '%s/co_metrics/%s' % (self._get_path(self.id), probabilities)
+        path = '{}/co_metrics/{}'.format(self._get_path(self.id), probabilities)
         return self._get_metrics(path, params, auto_retry=auto_retry)
 
     def window_co_metrics(self, probabilities, auto_retry=True, **params):
         probabilities = vectorize_range(probabilities)
-        path = '%s/window_co_metrics/%s' % (self._get_path(self.id), probabilities)
+        path = '{}/window_co_metrics/{}'.format(self._get_path(self.id), probabilities)
         return self._get_metrics(path, params, auto_retry=auto_retry)
 
     def el(self, auto_retry=True, **params):
-        path = '%s/el' % self._get_path(self.id)
+        path = '{}/el'.format(self._get_path(self.id))
         return float(
             request('get', path, params=params, auto_retry=auto_retry))
 
     def ep(self, thresholds, auto_retry=True, **params):
         thresholds = vectorize(thresholds)
-        path = '%s/exceedance_probabilities/%s' % (self._get_path(self.id),
-                                                   thresholds)
+        path = '{}/exceedance_probabilities/{}'.format(self._get_path(self.id), thresholds)
         return self._get_metrics(path, params, auto_retry=auto_retry)
 
     def tvar(self, probabilities, auto_retry=True, **params):
         probabilities = vectorize(probabilities)
-        path = '%s/tvar/%s' % (self._get_path(self.id), probabilities)
+        path = '{}/tvar/{}'.format(self._get_path(self.id), probabilities)
         return self._get_metrics(path, params, auto_retry=auto_retry)
 
     def window_var(self, probabilities, auto_retry=True, **params):
         probabilities = vectorize_range(probabilities)
-        path = '%s/window_var/%s' % (self._get_path(self.id), probabilities)
+        path = '{}/window_var/{}'.format(self._get_path(self.id), probabilities)
         return self._get_metrics(path, params, auto_retry=auto_retry)
 
     def download_ylt(self, auto_retry=True, **params):
-        path = '%s/ylt' % self._get_path(self.id)
+        path = '{}/ylt'.format(self._get_path(self.id))
         return request_raw(
             'get', path, params=params, auto_retry=auto_retry).content
 
     def download_yelt(self, auto_retry=True, **params):
-        path = '%s/yelt' % self._get_path(self.id)
+        path = '{}/yelt'.format(self._get_path(self.id))
         return request_raw(
             'get', path, params=params, auto_retry=auto_retry).content
 
     def back_allocation(self, source_id, auto_retry=True, **params):
         params['source_id'] = source_id
-        path = '%s/back_allocations' % self._get_path(self.id)
+        path = '{}/back_allocations'.format(self._get_path(self.id))
         data = request('get', path, auto_retry=auto_retry, params=params)
         return convert_to_analyzere_object(data)
 
 
 class OptimizationResource(Resource):
     def result(self):
-        path = '%s/result' % self._get_path(self.id)
+        path = '{}/result'.format(self._get_path(self.id))
         resp = request('get', path)
         return convert_to_analyzere_object(resp)

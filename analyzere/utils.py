@@ -96,7 +96,8 @@ def vectorize(values):
 
 def vectorize_range(values):
     """
-    Takes a value or list of tuples and returns a single result,
+    This function is for url endoding.
+    Takes a value or a tuple or list of tuples and returns a single result,
     tuples are joined by "," if necessary, elements in tuple are joined by '_'
     """
     if isinstance(values, tuple):
@@ -104,5 +105,5 @@ def vectorize_range(values):
     elif isinstance(values, list):
         if all([isinstance(item, tuple) for item in values]):
             return ','.join('_'.join(str(i) for i in v) for v in values)
-        raise Exception('values must be a tuple or list of tuples')
+        raise Exception('Items in the list must be tuples')
     return str(values)
