@@ -27,3 +27,7 @@ class MissingIdError(AnalyzeReError):
     def __init__(self, message=None):
         message = message or 'Object needs an id to complete this operation.'
         super(MissingIdError, self).__init__(message)
+
+
+class InvalidProbabilityError(AnalyzeReError):
+    pass

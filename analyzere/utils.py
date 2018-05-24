@@ -5,6 +5,8 @@ import re
 import six
 from six.moves.urllib.parse import urlparse
 
+from analyzere.errors import InvalidProbabilityError
+
 
 class UTC(tzinfo):
     def utcoffset(self, dt):
@@ -96,7 +98,7 @@ def vectorize(values):
 
 def vectorize_range(values):
     """
-    This function is for url endoding.
+    This function is for url encoding.
     Takes a value or a tuple or list of tuples and returns a single result,
     tuples are joined by "," if necessary, elements in tuple are joined by '_'
     """
@@ -105,5 +107,5 @@ def vectorize_range(values):
     elif isinstance(values, list):
         if all([isinstance(item, tuple) for item in values]):
             return ','.join('_'.join(str(i) for i in v) for v in values)
-        raise Exception('Items in the list must be tuples')
+        raise InvalidProbabilityError('Items in the list must be tuples')
     return str(values)
