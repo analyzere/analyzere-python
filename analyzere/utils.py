@@ -102,8 +102,8 @@ def vectorize_range(values):
     """
     if isinstance(values, tuple):
         return '_'.join(str(i) for i in values)
-    elif isinstance(values, list):
-        if all([isinstance(item, tuple) for item in values]):
-            return ','.join('_'.join(str(i) for i in v) for v in values)
-        raise TypeError('Items in the list must be tuples')
+    if isinstance(values, list):
+        if not all([isinstance(item, tuple) for item in values]):
+            raise TypeError('Items in the list must be tuples')
+        return ','.join('_'.join(str(i) for i in v) for v in values)
     return str(values)
