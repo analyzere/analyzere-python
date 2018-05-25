@@ -5,8 +5,6 @@ import re
 import six
 from six.moves.urllib.parse import urlparse
 
-from analyzere.errors import InvalidProbabilityError
-
 
 class UTC(tzinfo):
     def utcoffset(self, dt):
@@ -107,5 +105,5 @@ def vectorize_range(values):
     elif isinstance(values, list):
         if all([isinstance(item, tuple) for item in values]):
             return ','.join('_'.join(str(i) for i in v) for v in values)
-        raise InvalidProbabilityError('Items in the list must be tuples')
+        raise TypeError('Items in the list must be tuples')
     return str(values)

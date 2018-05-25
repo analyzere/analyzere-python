@@ -6,7 +6,6 @@ import six
 from six import StringIO
 
 from analyzere import utils
-from analyzere.errors import InvalidProbabilityError
 
 
 class TestStringHelpers:
@@ -108,6 +107,6 @@ def test_vectorize_range(values, returns):
 
 def test_vectorize_range_invalid():
     x = [1, 2, 3]
-    with pytest.raises(InvalidProbabilityError) as e:
+    with pytest.raises(TypeError) as e:
         utils.vectorize_range(x)
     assert str(e.value) == 'Items in the list must be tuples'
