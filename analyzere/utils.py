@@ -92,3 +92,18 @@ def vectorize(values):
     if isinstance(values, list):
         return ','.join(str(v) for v in values)
     return values
+
+
+def vectorize_range(values):
+    """
+    This function is for url encoding.
+    Takes a value or a tuple or list of tuples and returns a single result,
+    tuples are joined by "," if necessary, elements in tuple are joined by '_'
+    """
+    if isinstance(values, tuple):
+        return '_'.join(str(i) for i in values)
+    if isinstance(values, list):
+        if not all([isinstance(item, tuple) for item in values]):
+            raise TypeError('Items in the list must be tuples')
+        return ','.join('_'.join(str(i) for i in v) for v in values)
+    return str(values)

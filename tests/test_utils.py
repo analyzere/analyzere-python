@@ -91,3 +91,22 @@ def test_vectorize():
     assert utils.vectorize(x) == 123
     x = [123, 456]
     assert utils.vectorize(x) == '123,456'
+
+
+@pytest.mark.parametrize('values, returns', [
+    ((1, 3), '1_3'),
+    ([(1, 3), (2, 4)], '1_3,2_4'),
+    ((1, '3'), '1_3'),
+    ((1, 'str'), '1_str'),
+    ((1, 2, 3), '1_2_3'),
+    (123, '123'),
+])
+def test_vectorize_range(values, returns):
+    assert utils.vectorize_range(values) == returns
+
+
+def test_vectorize_range_invalid():
+    x = [1, 2, 3]
+    with pytest.raises(TypeError) as e:
+        utils.vectorize_range(x)
+    assert str(e.value) == 'Items in the list must be tuples'
