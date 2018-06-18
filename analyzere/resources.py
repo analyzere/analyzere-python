@@ -82,6 +82,11 @@ class FeeReference(EmbeddedResource):
         return {'ref': ['layer', 'fees', fee_name]}
 
 
+    @staticmethod
+    def create_from_fee(fee):
+        return {'ref': ['layer', 'fees', fee.name]}
+
+
 class Reinstatement(EmbeddedResource):
     pass
 
