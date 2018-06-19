@@ -66,8 +66,7 @@ class Treaty(EmbeddedResource):
 # Layers
 
 class Fee(EmbeddedResource):
-    def ref(self):
-        return {'ref': ['layer', 'fees', self.name]}
+    pass
 
 
 class FeeReference(EmbeddedResource):
@@ -77,10 +76,6 @@ class FeeReference(EmbeddedResource):
 
     # losses
     LOSSES = {'ref': ['layer', 'losses']}
-
-    @staticmethod
-    def from_fee_name(fee_name):
-        return {'ref': ['layer', 'fees', fee_name]}
 
     @staticmethod
     def from_fee(fee):
