@@ -169,7 +169,7 @@ class Candidate(NestedResource):
 
     def __init__(self, optimization_view_id=None, **kwargs):
         self.optimziation_view_id = optimization_view_id
-        super().__init__(**kwargs)
+        super(Candidate, self).__init__(**kwargs)
 
     def portfolio_view(self):
         path = '{}/candidates/{}/portfolio_view'.format(OptimizationView._get_path(self.optimziation_view_id),
