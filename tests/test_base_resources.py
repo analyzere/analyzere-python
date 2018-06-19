@@ -8,17 +8,16 @@ from six import StringIO
 
 import analyzere
 from analyzere import MissingIdError
-from analyzere.resources import Layer
+from analyzere.resources import Layer, OptimizationView, Candidate
 from analyzere.base_resources import (
     AnalyzeReObject,
     DataResource,
     EmbeddedResource,
     MetricsResource,
-    OptimizationResource,
     Reference,
     Resource,
-    convert_to_analyzere_object
-)
+    convert_to_analyzere_object,
+    NestedResource)
 from analyzere.errors import RetryAfter
 import uuid
 
@@ -316,6 +315,24 @@ class TestConvertToAnalyzeReObject:
         # AnalyzeReObjects
         o = convert_to_analyzere_object(resp)
         assert type(o[0]) == EmbeddedResource
+
+    def test_non_embedded_resource_requires_id(self):
+        # without an ID, an EmbeddedResource with no specific type is the expected conversion
+        # if the class passed was not a subclass of EmbeddedResource
+        class SomeResource(Resource):
+            pass
+
+        response_dict = {}
+        o = convert_to_analyzere_object(response_dict, SomeResource)
+        assert type(o) == EmbeddedResource
+
+    def test_nested_resource_does_not_require_id(self):
+        class SomeEmbeddedResource(NestedResource):
+            pass
+
+        response_dict = {}
+        o = convert_to_analyzere_object(response_dict, SomeEmbeddedResource)
+        assert type(o) == SomeEmbeddedResource
 
 
 class Foo(Resource):
@@ -838,13 +855,38 @@ class TestMetricsResource(SetBaseUrl):
     # TODO: Add tests for id: None
 
 
-class BazView(OptimizationResource):
-    pass
-
-
 class TestOptimizationResource(SetBaseUrl):
-    def test_get_results(self, reqmock):
-        reqmock.get('https://api/baz_views/abc123/result', status_code=200,
+    def test_retrieve(self, reqmock):
+        reqmock.get('https://api/optimization_views/abc123',
+                    status_code=200,
                     text='{"num": 1.0}')
-        f = BazView(id='abc123')
-        assert f.result().num == 1.0
+        f = OptimizationView.retrieve('abc123')
+        assert f.num == 1.0
+
+    def test_result(self, reqmock):
+        reqmock.get('https://api/optimization_views/abc123/result',
+                    status_code=200,
+                    text='{"num": 1.0}')
+        f = OptimizationView(id='abc123').result()
+        assert f.num == 1.0
+
+    def test_candidates(self, reqmock):
+        candidates_response = ('{'
+                               ' "items": [{"foo": "bar"}],'
+                               ' "meta": {"total_count": 1,"limit": 100,"offset": 0}'
+                               '}')
+        reqmock.get('https://api/optimization_views/abc123/candidates',
+                    status_code=200,
+                    text=candidates_response)
+        r = OptimizationView(id='abc123').candidates()
+        assert isinstance(r, list)
+        assert len(r) == 1
+        assert type(r[0]) == Candidate
+        assert r[0].foo == 'bar'
+
+    def test_initial_portfolio_metrics(self, reqmock):
+        reqmock.get('https://api/optimization_views/abc123/initial_portfolio_metrics',
+                    status_code=200,
+                    text='{"num": 1.0}')
+        f = OptimizationView(id='abc123').initial_metrics()
+        assert f.num == 1.0
