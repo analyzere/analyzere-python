@@ -65,6 +65,23 @@ class Treaty(EmbeddedResource):
 
 # Layers
 
+class Fee(EmbeddedResource):
+    pass
+
+
+class FeeReference(EmbeddedResource):
+    # premiums
+    PREMIUM = {'ref': ['layer', 'premium']}
+    REINSTATEMENT_PREMIUM = {'ref': ['layer', 'reinstatement_premium']}
+
+    # losses
+    LOSSES = {'ref': ['layer', 'losses']}
+
+    @staticmethod
+    def from_fee(fee):
+        return {'ref': ['layer', 'fees', fee.name]}
+
+
 class Reinstatement(EmbeddedResource):
     pass
 
