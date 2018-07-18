@@ -168,11 +168,11 @@ class OptimizationDomain(EmbeddedResource):
 class Candidate(NestedResource):
 
     def __init__(self, optimization_view_id=None, **kwargs):
-        self.optimziation_view_id = optimization_view_id
+        self.optimization_view_id = optimization_view_id
         super(Candidate, self).__init__(**kwargs)
 
     def portfolio_view(self):
-        path = '{}/candidates/{}/portfolio_view'.format(OptimizationView._get_path(self.optimziation_view_id),
+        path = '{}/candidates/{}/portfolio_view'.format(OptimizationView._get_path(self.optimization_view_id),
                                                         self.index)
         resp = request('get', path)
         return convert_to_analyzere_object(resp, PortfolioView)
