@@ -175,4 +175,4 @@ class Candidate(NestedResource):
         path = '{}/candidates/{}/portfolio_view'.format(OptimizationView._get_path(self.optimziation_view_id),
                                                         self.index)
         resp = request('get', path)
-        return convert_to_analyzere_object(resp)
+        return convert_to_analyzere_object(resp, PortfolioView)
