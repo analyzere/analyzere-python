@@ -112,19 +112,23 @@ def load_reference(collection_name, id_):
     return cls.retrieve(id_)
 
 
-def convert_to_analyzere_object(value, cls=None):
+def convert_to_analyzere_object(value, cls=None, **kwargs):
     if isinstance(value, list):
-        return [convert_to_analyzere_object(v, cls) for v in value]
+        return [convert_to_analyzere_object(v, cls, **kwargs) for v in value]
     elif isinstance(value, dict):
         if 'href' in value:
             return Reference(value['href'])
 
         if 'items' in value and 'meta' in value:
-            items = convert_to_analyzere_object(value['items'], cls)
+            items = convert_to_analyzere_object(value['items'], cls, **kwargs)
             meta = convert_to_analyzere_object(value['meta'])
             return PaginatedCollection(items, meta)
 
-        obj = cls() if (cls and 'id' in value) else EmbeddedResource()
+        if cls and ('id' in value or issubclass(cls, NestedResource)):
+            obj = cls(**kwargs)
+        else:
+            obj = EmbeddedResource()
+
         for k, v in six.iteritems(value):
             # Rename "_type" attribute to "type" so it's not considered private
             if k == '_type':
@@ -268,6 +272,20 @@ class Resource(AnalyzeReObject):
 
 
 class EmbeddedResource(AnalyzeReObject):
+    """
+    Always appears embedded within other response objects.  Never has an ID attribute.
+    """
+
+    def __getitem__(self, item):
+        return getattr(self, item, None)
+
+
+class NestedResource(AnalyzeReObject):
+    """
+    May appear embedded within another response object, similar to EmbeddedResource,
+    but may also appear as a top-level object in something such as a list response.
+    May or may not have an ID attribute.
+    """
     pass
 
 
@@ -419,17 +437,3 @@ class MetricsResource(Resource):
         path = '{}/back_allocations'.format(self._get_path(self.id))
         data = request('get', path, auto_retry=auto_retry, params=params)
         return convert_to_analyzere_object(data)
-
-
-class EventCatalogResource(DataResource):
-    def profile(self):
-        path = '%s/profile' % self._get_path(self.id)
-        resp = request('get', path)
-        return convert_to_analyzere_object(resp)
-
-
-class OptimizationResource(Resource):
-    def result(self):
-        path = '{}/result'.format(self._get_path(self.id))
-        resp = request('get', path)
-        return convert_to_analyzere_object(resp)

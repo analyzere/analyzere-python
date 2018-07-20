@@ -1,13 +1,13 @@
+import warnings
+
 from analyzere.base_resources import (
     DataResource,
     EmbeddedResource,
-    EventCatalogResource,
     MetricsResource,
-    OptimizationResource,
     Resource,
     load_reference,
     to_dict,
-)
+    convert_to_analyzere_object, NestedResource)
 from analyzere.requestor import request
 
 
@@ -21,8 +21,11 @@ class MonetaryUnit(EmbeddedResource):
 
 # Event catalogs
 
-class EventCatalog(EventCatalogResource):
-    pass
+class EventCatalog(DataResource):
+    def profile(self):
+        path = '%s/profile' % self._get_path(self.id)
+        resp = request('get', path)
+        return convert_to_analyzere_object(resp)
 
 
 # Exchange rate tables
@@ -143,9 +146,50 @@ class DynamicPortfolioView(MetricsResource):
 
 # Optimization views
 
-class OptimizationView(OptimizationResource):
-    pass
+class OptimizationView(Resource):
+    def result(self):
+        warnings.warn(
+            "result() is deprecated, use candidates() instead to page over results",
+            DeprecationWarning
+        )
+        path = '{}/result'.format(self._get_path(self.id))
+        resp = request('get', path)
+        return convert_to_analyzere_object(resp)
+
+    def initial_metrics(self):
+        """
+        The name of this method is chosen to avoid overlap with the initial_portfolio_metrics property of the
+        OptimizationView
+        """
+        path = '{}/initial_portfolio_metrics'.format(self._get_path(self.id))
+        resp = request('get', path)
+        return convert_to_analyzere_object(resp)
+
+    def candidates(self, index=None):
+        if index is None:
+            path = '{}/candidates'.format(self._get_path(self.id))
+        else:
+            try:
+                index = int(index)
+            except ValueError:
+                raise Exception('index argument provided to OptimizationView.candidates() must be an integer')
+            path = '{}/candidates/{}'.format(self._get_path(self.id), index)
+        resp = request('get', path)
+        return convert_to_analyzere_object(resp, Candidate, optimization_view_id=self.id)
 
 
 class OptimizationDomain(EmbeddedResource):
     pass
+
+
+class Candidate(NestedResource):
+
+    def __init__(self, optimization_view_id=None, **kwargs):
+        self.optimization_view_id = optimization_view_id
+        super(Candidate, self).__init__(**kwargs)
+
+    def portfolio_view(self):
+        path = '{}/candidates/{}/portfolio_view'.format(OptimizationView._get_path(self.optimization_view_id),
+                                                        self.index)
+        resp = request('get', path)
+        return convert_to_analyzere_object(resp, PortfolioView)
