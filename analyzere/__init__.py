@@ -19,6 +19,7 @@ from analyzere.resources import (  # noqa
     FeeReference,
     InuringTerms,
     Layer,
+    LayerPolicy,
     LayerView,
     LossAttribute,
     LossFilter,

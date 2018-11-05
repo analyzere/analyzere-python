@@ -85,6 +85,15 @@ class FeeReference(EmbeddedResource):
         return {'ref': ['layer', 'fees', fee.name]}
 
 
+class LayerPolicy(EmbeddedResource):
+    def __init__(self, transform_records, forward_records, **kwargs):
+        super(LayerPolicy, self).__init__(
+            transform_records=transform_records,
+            forward_records=forward_records,
+            **kwargs
+        )
+
+
 class Reinstatement(EmbeddedResource):
     pass
 
