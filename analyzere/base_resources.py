@@ -184,8 +184,7 @@ class AnalyzeReObject(object):
         return repr_str
 
     def __eq__(self, other):
-        return (isinstance(other, self.__class__) and
-                self.__dict__ == other.__dict__)
+        return (isinstance(other, self.__class__) and self.__dict__ == other.__dict__)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -359,8 +358,7 @@ class DataResource(Resource):
         # Block until data has finished processing
         while True:
             resp = self.upload_status
-            if (resp.status == 'Processing Successful' or
-                    resp.status == 'Processing Failed'):
+            if (resp.status == 'Processing Successful' or resp.status == 'Processing Failed'):
                 commit_callback(100.0)
                 return resp
             else:

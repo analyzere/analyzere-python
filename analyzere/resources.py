@@ -74,15 +74,16 @@ class Fee(EmbeddedResource):
 
 class FeeReference(EmbeddedResource):
     # premiums
-    PREMIUM = {'ref': ['layer', 'premium']}
-    REINSTATEMENT_PREMIUM = {'ref': ['layer', 'reinstatement_premium']}
+    PREMIUM = {'ref': ['Layer', 'Premium']}
+    REINSTATEMENT_PREMIUM = {'ref': ['Layer', 'ReinstatementPremium']}
+    REINSTATEMENT_BROKERAGE = {'ref': ['Layer', 'ReinstatementBrokerage']}
 
     # losses
-    LOSSES = {'ref': ['layer', 'losses']}
+    LOSSES = {'ref': ['Layer', 'Losses']}
 
     @staticmethod
     def from_fee(fee):
-        return {'ref': ['layer', 'fees', fee.name]}
+        return {'ref': ['Layer', 'Fees', fee.name]}
 
 
 class LayerPolicy(EmbeddedResource):
