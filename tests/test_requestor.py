@@ -66,8 +66,7 @@ class TestRequest:
     def test_request_user_agent(self, reqmock):
         reqmock.post('https://api/bar', status_code=201)
         request('post', 'bar', data=None)
-        assert (reqmock.last_request.headers['User-Agent'] ==
-                analyzere.user_agent)
+        assert (reqmock.last_request.headers['User-Agent'] == analyzere.user_agent)
 
     def test_request_serialized(self, reqmock):
         reqmock.post('https://api/bar', status_code=201)
@@ -112,8 +111,8 @@ class TestRequestRaw:
         analyzere.password = 'pa55'
         request_raw('get', 'bar')
 
-        assert (reqmock.last_request.headers['Authorization'] ==
-                'Basic %s' % base64.b64encode(b'user:pa55').decode('ascii'))
+        assert (reqmock.last_request.headers['Authorization'] == 'Basic %s'
+                % base64.b64encode(b'user:pa55').decode('ascii'))
 
     def test_request_with_params(self, reqmock):
         reqmock.get('https://api/bar', status_code=200)
