@@ -1,7 +1,7 @@
 import pytest
 
 import analyzere
-from analyzere import MonetaryUnit
+from analyzere import MonetaryUnit, LayerPolicy
 from analyzere.resources import PortfolioView, LayerView
 
 
@@ -29,6 +29,24 @@ class TestMonetaryUnit:
 
         m = MonetaryUnit(value=123, currency='USD')
         assert m.value == 123
+
+
+class TestLayerPolicy:
+    def test_init_with_pos_arg(self):
+        policy = LayerPolicy(["Loss"], [])
+        assert policy.transform_records == ["Loss"]
+        assert policy.forward_records == []
+
+        with pytest.raises(TypeError):
+            LayerPolicy([])
+
+    def test_init_with_kwargs(self):
+        policy = LayerPolicy(["Loss"], forward_records=[])
+        assert policy.transform_records == ["Loss"]
+        assert policy.forward_records == []
+
+        policy = LayerPolicy(transform_records=["Loss"], forward_records=[])
+        assert policy.transform_records == ["Loss"]
 
 
 class TestMarginal(SetBaseUrl):
