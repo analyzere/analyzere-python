@@ -85,7 +85,7 @@ Create a ``.pypirc`` file with your production and test server accounts in your
     password = <password>
 
     [pypi]
-    repository = https://test.pypi.org/legacy/
+    repository = https://upload.pypi.org/legacy/
     username = <username>
     password = <password>
 
