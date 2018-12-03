@@ -80,12 +80,12 @@ Create a ``.pypirc`` file with your production and test server accounts in your
         testpypi
 
     [testpypi]
-    repository = https://testpypi.python.org/pypi
+    repository = https://test.pypi.org/legacy/
     username = <username>
     password = <password>
 
     [pypi]
-    repository = https://pypi.python.org/pypi
+    repository = https://test.pypi.org/legacy/
     username = <username>
     password = <password>
 
@@ -93,18 +93,18 @@ Create a ``.pypirc`` file with your production and test server accounts in your
 Note that ``testpypi`` and ``pypi`` require separate registration.
 
 Testing Publication
------------------
+-------------------
 
 1. Ensure you have tagged the master repository according to the tagging
 instructions above.
 
-2. Register the package::
-
-    python setup.py register -r testpypi
-
-3. Package source and wheel distributions::
+2. Package source and wheel distributions::
 
     python setup.py sdist bdist_wheel
+
+3. Check format::
+
+    twine check dist/*
 
 4. Upload to PyPI with twine::
 
@@ -118,16 +118,12 @@ Publishing
 -----------
 
 1. Ensure you have tagged the master repository according to the tagging
-instructions above.
+instructions above, testing publication before publication.
 
-2. Register the package::
-
-    python setup.py register -r pypi
-
-3. Package source and wheel distributions::
+2. Package source and wheel distributions::
 
     python setup.py sdist bdist_wheel
 
-4. Upload to PyPI with twine::
+3. Upload to PyPI with twine::
 
     twine upload dist/* -r pypi
