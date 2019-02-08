@@ -39,12 +39,6 @@ class ExchangeRateTable(DataResource):
         #   {
         #       "code": "CAD"
         #   }
-        # I think we do not need to convert it to the more concise list, because we can extend the structure
-        # in the future like
-        #   {
-        #       "code": "CAD",
-        #       "rate": 1.32
-        #   }
         return convert_to_analyzere_object(resp)
 
 

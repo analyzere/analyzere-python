@@ -2,7 +2,7 @@ import pytest
 
 import analyzere
 from analyzere import MonetaryUnit, LayerPolicy
-from analyzere.resources import PortfolioView, LayerView
+from analyzere.resources import PortfolioView, LayerView, ExchangeRateTable
 
 
 class SetBaseUrl(object):
@@ -80,3 +80,36 @@ class TestMarginal(SetBaseUrl):
         assert req_json['remove_layer_view_ids'][0]['ref_id'] == 'yyy'
 
         assert pv.id == 'a1'
+
+    # ARE-6130 wrapper for the exchange rate table unique currencies function
+    def test_unique_currencies(self, reqmock):
+
+        # mock for the Exchange Rate table request
+        reqmock.get('https://api/exchange_rate_tables/abc_id', status_code=200, text='{"id":"abc_id"}')
+
+        fx_table = ExchangeRateTable.retrieve('abc_id')
+        dir(fx_table)
+        type(fx_table.id)
+        print(fx_table.id)
+        print("This is a print statement in test")
+        # mock for the currencies method call
+        reqmock.get('https://api/exchange_rate_tables/abc_id/currencies', status_code=200,
+                    text='{'
+                         '"currencies": '
+                         '[ '
+                         '{"code": "CAD"}, '
+                         '{"code": "EUR"} '
+                         ']'
+                         '}')
+        curr = fx_table.currencies()
+        type(curr)
+        # f = FooView(id='abc123')
+        # assert f.window_var((0.0, 1.0)).num == 1.0
+
+        # reqmock.get('https://api/foo_views/abc123/window_var/0.0_0.5,0.0_1.0',
+        #            status_code=200, text='[{"num": 1.0}, {"num": 2.0}]')
+        # wm = f.window_var([(0.0, 0.5), (0.0, 1.0)])
+        # assert len(wm) == 2
+        # assert wm[0].num == 1.0
+        # assert wm[1].num == 2.0
+        assert 1 == 1
