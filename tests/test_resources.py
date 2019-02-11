@@ -83,15 +83,11 @@ class TestMarginal(SetBaseUrl):
 
     # ARE-6130 wrapper for the exchange rate table unique currencies function
     def test_unique_currencies(self, reqmock):
-
         # mock for the Exchange Rate table request
-        reqmock.get('https://api/exchange_rate_tables/abc_id', status_code=200, text='{"id":"abc_id"}')
+        reqmock.get('https://api/exchange_rate_tables/abc_id',
+                    status_code=200, text='{"id":"abc_id"}')
 
         fx_table = ExchangeRateTable.retrieve('abc_id')
-        dir(fx_table)
-        type(fx_table.id)
-        print(fx_table.id)
-        print("This is a print statement in test")
         # mock for the currencies method call
         reqmock.get('https://api/exchange_rate_tables/abc_id/currencies', status_code=200,
                     text='{'
@@ -102,14 +98,25 @@ class TestMarginal(SetBaseUrl):
                          ']'
                          '}')
         curr = fx_table.currencies()
-        type(curr)
-        # f = FooView(id='abc123')
-        # assert f.window_var((0.0, 1.0)).num == 1.0
+        assert hasattr(curr, 'currencies')
+        assert len(curr.currencies) == 2
+        currencies = set()
+        for c in curr.currencies:
+            currencies.add(c['code'])
+        assert currencies == {'EUR', 'CAD'}
 
-        # reqmock.get('https://api/foo_views/abc123/window_var/0.0_0.5,0.0_1.0',
-        #            status_code=200, text='[{"num": 1.0}, {"num": 2.0}]')
-        # wm = f.window_var([(0.0, 0.5), (0.0, 1.0)])
-        # assert len(wm) == 2
-        # assert wm[0].num == 1.0
-        # assert wm[1].num == 2.0
-        assert 1 == 1
+    # we still should have save the empty currencies list
+    def test_unique_currencies_empty(self, reqmock):
+        reqmock.get('https://api/exchange_rate_tables/abc_id',
+                    status_code=200, text='{"id":"abc_id"}')
+        fx_table = ExchangeRateTable.retrieve('abc_id')
+
+        reqmock.get('https://api/exchange_rate_tables/abc_id/currencies', status_code=200,
+                    text='{'
+                         '"currencies": '
+                         '[ '
+                         ']'
+                         '}')
+        curr = fx_table.currencies()
+        assert hasattr(curr, 'currencies')
+        assert len(curr.currencies) == 0
