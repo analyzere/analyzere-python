@@ -32,7 +32,7 @@ class EventCatalog(DataResource):
 
 class ExchangeRateTable(DataResource):
     def currencies(self):
-        path = '%s/currencies' % self._get_path(self.id)
+        path = '{}/currencies'.format(self._get_path(self.id))
         resp = request('get', path)
         # response will be an embedded object with currencies list
         # each element of the currencies list is again an embedded object with the structure like:
