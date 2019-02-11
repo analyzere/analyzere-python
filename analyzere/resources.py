@@ -31,7 +31,15 @@ class EventCatalog(DataResource):
 # Exchange rate tables
 
 class ExchangeRateTable(DataResource):
-    pass
+    def currencies(self):
+        path = '{}/currencies'.format(self._get_path(self.id))
+        resp = request('get', path)
+        # response will be an embedded object with currencies list
+        # each element of the currencies list is again an embedded object with the structure like:
+        #   {
+        #       "code": "CAD"
+        #   }
+        return convert_to_analyzere_object(resp)
 
 
 class ExchangeRateSelectionRule(EmbeddedResource):
