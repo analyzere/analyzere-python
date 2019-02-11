@@ -85,18 +85,12 @@ class TestMarginal(SetBaseUrl):
     def test_unique_currencies(self, reqmock):
         # mock for the Exchange Rate table request
         reqmock.get('https://api/exchange_rate_tables/abc_id',
-                    status_code=200, text='{"id":"abc_id"}')
+                    status_code=200, text='{"id": "abc_id"}')
 
         fx_table = ExchangeRateTable.retrieve('abc_id')
         # mock for the currencies method call
-        reqmock.get('https://api/exchange_rate_tables/abc_id/currencies', status_code=200,
-                    text='{'
-                         '"currencies": '
-                         '[ '
-                         '{"code": "CAD"}, '
-                         '{"code": "EUR"} '
-                         ']'
-                         '}')
+        reqmock.get('https://api/exchange_rate_tables/abc_id/currencies',
+                    status_code=200, text='{"currencies": [{"code": "CAD"}, {"code": "EUR"}]}')
         curr = fx_table.currencies()
         assert hasattr(curr, 'currencies')
         assert len(curr.currencies) == 2
@@ -111,12 +105,8 @@ class TestMarginal(SetBaseUrl):
                     status_code=200, text='{"id":"abc_id"}')
         fx_table = ExchangeRateTable.retrieve('abc_id')
 
-        reqmock.get('https://api/exchange_rate_tables/abc_id/currencies', status_code=200,
-                    text='{'
-                         '"currencies": '
-                         '[ '
-                         ']'
-                         '}')
+        reqmock.get('https://api/exchange_rate_tables/abc_id/currencies',
+                    status_code=200, text='{"currencies": []}')
         curr = fx_table.currencies()
         assert hasattr(curr, 'currencies')
         assert len(curr.currencies) == 0
