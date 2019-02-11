@@ -187,6 +187,23 @@ class OptimizationView(Resource):
         resp = request('get', path)
         return convert_to_analyzere_object(resp, Candidate, optimization_view_id=self.id)
 
+    def candidate_parameters(self, index=None):
+        if index is None:
+            path = '{}/candidate_parameters'.format(self._get_path(self.id))
+        else:
+            try:
+                index = int(index)
+            except ValueError:
+                raise Exception('index argument provided to OptimizationView.candidate_parameters() must be an integer')
+            path = '{}/candidate_parameters/{}'.format(self._get_path(self.id), index)
+        resp = request('get', path)
+        return convert_to_analyzere_object(resp, Candidate, optimization_view_id=self.id)
+
+    def candidate_metrics(self):
+        path = '{}/candidate_metrics'.format(self._get_path(self.id))
+        resp = request('get', path)
+        return convert_to_analyzere_object(resp)
+
 
 class OptimizationDomain(EmbeddedResource):
     pass
