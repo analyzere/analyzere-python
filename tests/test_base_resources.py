@@ -884,6 +884,27 @@ class TestOptimizationResource(SetBaseUrl):
         assert type(r[0]) == Candidate
         assert r[0].foo == 'bar'
 
+    def test_candidate_parameters(self, reqmock):
+        candidate_parameters_response = ('{'
+                                         ' "items": [{"foo": "bar"}],'
+                                         ' "meta": {"total_count": 1,"limit": 100,"offset": 0}'
+                                         '}')
+        reqmock.get('https://api/optimization_views/abc123/candidate_parameters',
+                    status_code=200,
+                    text=candidate_parameters_response)
+        r = OptimizationView(id='abc123').candidate_parameters()
+        assert isinstance(r, list)
+        assert len(r) == 1
+        assert type(r[0]) == Candidate
+        assert r[0].foo == 'bar'
+
+    def test_candidate_metrics(self, reqmock):
+        reqmock.get('https://api/optimization_views/abc123/candidate_metrics',
+                    status_code=200,
+                    text='{"num": 1.0}')
+        f = OptimizationView(id='abc123').candidate_metrics()
+        assert f.num == 1.0
+
     def test_initial_portfolio_metrics(self, reqmock):
         reqmock.get('https://api/optimization_views/abc123/initial_portfolio_metrics',
                     status_code=200,
