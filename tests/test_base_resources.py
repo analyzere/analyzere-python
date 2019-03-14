@@ -911,3 +911,46 @@ class TestOptimizationResource(SetBaseUrl):
                     text='{"num": 1.0}')
         f = OptimizationView(id='abc123').initial_metrics()
         assert f.num == 1.0
+
+    sensitivity_text = """
+    {"sensitivities": [
+    {"normalized_interquartile_range": 0.25, "min": 0.0, "normalized_standard_deviation": 0.29,
+    "initial_share": 0.18, "hist": { "0.05": 5, "0.1": 0, "0.15": 0, "0.2": 0, "0.25": 0, "0.3": 9, "0.35": 0,
+    "0.4": 0, "0.45": 0, "0.5": 3, "0.55": 0, "0.6": 5, "0.65": 0, "0.7": 3, "0.75": 0, "0.8": 3, "0.85": 2,
+    "0.9": 4, "0.95": 2, "1.0": 64}, "mean": 0.81, "max": 1.0, "ref_id": "layer2"
+    },
+    { "normalized_interquartile_range": 0.71, "min": 0.0, "normalized_standard_deviation": 0.35,
+    "initial_share": 0.08, "hist": {"0.05": 36, "0.1": 0, "0.15": 8, "0.2": 1, "0.25": 1, "0.3": 3,
+    "0.35": 2, "0.4": 3, "0.45": 0, "0.5": 0, "0.55": 8, "0.6": 0, "0.65": 12, "0.7": 0, "0.75": 1,
+    "0.8": 10, "0.85": 0, "0.9": 7, "0.95": 0, "1.0": 8}, "mean": 0.37, "max": 1.0, "ref_id": "layer1" }
+    ] } """
+
+    def test_sensitivity_analysis_results(self, reqmock):
+        reqmock.get('https://api/optimization_views/abc_id',
+                    status_code=200, text='{"id":"abc_id"}')
+        ov = OptimizationView.retrieve('abc_id')
+        reqmock.get('https://api/optimization_views/abc_id/sensitivity_analysis',
+                    status_code=200, text=TestOptimizationResource.sensitivity_text)
+        r = ov.sensitivity_analysis()
+        assert hasattr(r, 'sensitivities')
+
+    def test_sensitivity_analysis_empty(self, reqmock):
+        # result can be an empty list
+        reqmock.get('https://api/optimization_views/abc_id',
+                    status_code=200, text='{"id":"abc_id"}')
+        ov = OptimizationView.retrieve('abc_id')
+        reqmock.get('https://api/optimization_views/abc_id/sensitivity_analysis',
+                    status_code=200, text='{"sensitivities": []}')
+        r = ov.sensitivity_analysis()
+        assert hasattr(r, 'sensitivities')
+        assert len(r.sensitivities) == 0
+
+    def test_sensitivity_analysis_with_candidates(self, reqmock):
+        reqmock.get('https://api/optimization_views/abc_id',
+                    status_code=200, text='{"id":"abc_id"}')
+        ov = OptimizationView.retrieve('abc_id')
+        reqmock.get('https://api/optimization_views/abc_id/sensitivity_analysis?candidates=0,2,5',
+                    status_code=200, text=TestOptimizationResource.sensitivity_text)
+        r = ov.sensitivity_analysis(candidates=[0, 2, 5])
+
+        assert len(r.sensitivities) == 2
