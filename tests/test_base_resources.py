@@ -933,6 +933,14 @@ class TestOptimizationResource(SetBaseUrl):
                     status_code=200, text=TestOptimizationResource.sensitivity_text)
         r = ov.sensitivity_analysis()
         assert hasattr(r, 'sensitivities')
+        assert len(r.sensitivities) == 2
+        for i in range(len(r.sensitivities)):
+            assert hasattr(r.sensitivities[i], 'hist')
+            assert hasattr(r.sensitivities[i], 'min')
+            assert hasattr(r.sensitivities[i], 'max')
+            assert hasattr(r.sensitivities[i], 'mean')
+            assert hasattr(r.sensitivities[i], 'normalized_standard_deviation')
+            assert hasattr(r.sensitivities[i], 'normalized_interquartile_range')
 
     def test_sensitivity_analysis_empty(self, reqmock):
         # result can be an empty list
@@ -943,7 +951,6 @@ class TestOptimizationResource(SetBaseUrl):
                     status_code=200, text='{"sensitivities": []}')
         r = ov.sensitivity_analysis()
         assert hasattr(r, 'sensitivities')
-        assert len(r.sensitivities) == 0
 
     def test_sensitivity_analysis_with_candidates(self, reqmock):
         reqmock.get('https://api/optimization_views/abc_id',
@@ -952,5 +959,12 @@ class TestOptimizationResource(SetBaseUrl):
         reqmock.get('https://api/optimization_views/abc_id/sensitivity_analysis?candidates=0,2,5',
                     status_code=200, text=TestOptimizationResource.sensitivity_text)
         r = ov.sensitivity_analysis(candidates=[0, 2, 5])
-
+        assert hasattr(r, 'sensitivities')
         assert len(r.sensitivities) == 2
+        for i in range(len(r.sensitivities)):
+            assert hasattr(r.sensitivities[i], 'hist')
+            assert hasattr(r.sensitivities[i], 'min')
+            assert hasattr(r.sensitivities[i], 'max')
+            assert hasattr(r.sensitivities[i], 'mean')
+            assert hasattr(r.sensitivities[i], 'normalized_standard_deviation')
+            assert hasattr(r.sensitivities[i], 'normalized_interquartile_range')
