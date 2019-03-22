@@ -213,6 +213,8 @@ class OptimizationView(Resource):
         return convert_to_analyzere_object(resp)
 
     def sensitivity_analysis(self, candidates=[]):
+        # candidates can be only non negative integers
+        candidates = list(filter(lambda x: isinstance(x, int) and x >= 0, candidates))
         if len(candidates) == 0:
             path = '{}/sensitivity_analysis'.format(self._get_path(self.id))
         else:
