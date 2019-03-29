@@ -925,53 +925,27 @@ class TestOptimizationResource(SetBaseUrl):
     "0.8": 10, "0.85": 0, "0.9": 7, "0.95": 0, "1.0": 8}, "mean": 0.37, "max": 1.0, "ref_id": "layer1" }
     ] } """
 
-    def test_sensitivity_analysis_results(self, reqmock):
-        reqmock.get('https://api/optimization_views/abc_id',
-                    status_code=200, text='{"id":"abc_id"}')
-        ov = OptimizationView.retrieve('abc_id')
-        reqmock.get('https://api/optimization_views/abc_id/sensitivity_analysis',
-                    status_code=200, text=TestOptimizationResource.sensitivity_text)
-        r = ov.sensitivity_analysis()
-        assert hasattr(r, 'sensitivities')
-        assert len(r.sensitivities) == 2
-        for i in range(len(r.sensitivities)):
-            assert hasattr(r.sensitivities[i], 'hist')
-            assert hasattr(r.sensitivities[i], 'min')
-            assert hasattr(r.sensitivities[i], 'max')
-            assert hasattr(r.sensitivities[i], 'mean')
-            assert hasattr(r.sensitivities[i], 'normalized_standard_deviation')
-            assert hasattr(r.sensitivities[i], 'normalized_interquartile_range')
-            assert hasattr(r.sensitivities[i], 'ref_id')
+    required_attributes = ['hist', 'min', 'max', 'mean', 'normalized_standard_deviation',
+                           'normalized_interquartile_range', 'ref_id']
 
-    def test_sensitivity_analysis_with_candidates(self, reqmock):
+    @pytest.mark.parametrize("get_string, candidates, expected_len", [
+        ('https://api/optimization_views/abc_id/sensitivity_analysis', [], 2),
+        ('https://api/optimization_views/abc_id/sensitivity_analysis?candidates=0,2,5', [0, 2, 5], 2),
+        ('https://api/optimization_views/abc_id/sensitivity_analysis?candidates=0,2,5', [0, 2, 5, 'a', 1.1, -2], 2)
+    ])
+    def test_sensitivity_analysis_with_candidates(self, reqmock, candidates, expected_len, get_string):
         # list of candidates should be translated to the correct api request
         reqmock.get('https://api/optimization_views/abc_id',
                     status_code=200, text='{"id":"abc_id"}')
         ov = OptimizationView.retrieve('abc_id')
-        reqmock.get('https://api/optimization_views/abc_id/sensitivity_analysis?candidates=0,2,5',
+        reqmock.get(get_string,
                     status_code=200, text=TestOptimizationResource.sensitivity_text)
-        r = ov.sensitivity_analysis(candidates=[0, 2, 5])
+        r = ov.sensitivity_analysis(candidates=candidates)
         assert hasattr(r, 'sensitivities')
-        assert len(r.sensitivities) == 2
+        assert len(r.sensitivities) == expected_len
         for i in range(len(r.sensitivities)):
-            assert hasattr(r.sensitivities[i], 'hist')
-            assert hasattr(r.sensitivities[i], 'min')
-            assert hasattr(r.sensitivities[i], 'max')
-            assert hasattr(r.sensitivities[i], 'mean')
-            assert hasattr(r.sensitivities[i], 'normalized_standard_deviation')
-            assert hasattr(r.sensitivities[i], 'normalized_interquartile_range')
-            assert hasattr(r.sensitivities[i], 'ref_id')
-
-    def test_sensitivity_analysis_with_noise_candidates(self, reqmock):
-        reqmock.get('https://api/optimization_views/abc_id',
-                    status_code=200, text='{"id":"abc_id"}')
-        ov = OptimizationView.retrieve('abc_id')
-        reqmock.get('https://api/optimization_views/abc_id/sensitivity_analysis?candidates=0,2,5',
-                    status_code=200, text=TestOptimizationResource.sensitivity_text)
-        # non integers and negative integers should be filtered out before request is made
-        r = ov.sensitivity_analysis(candidates=[0, 2, 5, 'a', 1.1, -2])
-        assert hasattr(r, 'sensitivities')
-        assert len(r.sensitivities) == 2
+            for attribute in TestOptimizationResource.required_attributes:
+                assert hasattr(r.sensitivities[i], attribute)
 
     def test_sensitivity_analysis_empty(self, reqmock):
         # result can be an empty list
