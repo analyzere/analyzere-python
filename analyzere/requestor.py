@@ -6,7 +6,7 @@ from six.moves.urllib.parse import urljoin
 
 import analyzere
 from analyzere import errors, utils
-
+from retrying import retry
 
 def handle_api_error(resp, code):
     body = resp.text
@@ -61,6 +61,7 @@ def request(method, path, params=None, data=None, auto_retry=True):
     return content
 
 
+@retry(stop_max_attempt_number=5)
 def request_raw(method, path, params=None, body=None, headers=None,
                 handle_errors=True, auto_retry=True):
     kwargs = {
