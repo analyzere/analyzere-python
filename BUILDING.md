@@ -27,12 +27,12 @@ docker build -t analyzere-python-base:latest -f Dockerfile.base .
 
 *tag the image*
 ```bash
-docker tag analyzere-python-base:latest 612007926530.dkr.ecr.us-east-1.amazonaws.com/analyzere-python-base:latest
+docker tag analyzere-python-base:latest 753029624111.dkr.ecr.us-east-2.amazonaws.com/analyzere-python-base:latest
 ```
 
 *push the image to ECR*
 ```bash
-docker push 612007926530.dkr.ecr.us-east-1.amazonaws.com/analyzere-python-base:latest
+docker push 753029624111.dkr.ecr.us-east-2.amazonaws.com/analyzere-python-base:latest
 ```
 
 Now you can use the regular Dockerfile, which will use your new base
