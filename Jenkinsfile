@@ -11,13 +11,13 @@ pipeline {
       agent { label 'linux' }
       steps {
         withAWS(){
-          script{$
-              def login = ecrLogin()$
-              sh("echo ${login}")$
-              sh("${login}")$
-              debug_env()$
-          }$
-          sh("$WORKSPACE/build/tests")
+          script{
+              def login = ecrLogin()
+              sh("echo ${login}")
+              sh("${login}")
+              debug_env()
+              sh("$WORKSPACE/build/tests")
+          }
         } // End of Credentials
       } // steps
       post {
