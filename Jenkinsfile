@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 pipeline {
-  agent none // Allows stages to be built on different labels
+  agent none
 
   stages {
     stage('Tests') {
