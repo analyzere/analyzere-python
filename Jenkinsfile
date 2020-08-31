@@ -6,7 +6,7 @@ pipeline {
     stage('Tests') {
       environment {
         WORKSPACE = "${workspace}"
-        AWS_DEFAULT_REGION = "us-east-1"
+        AWS_DEFAULT_REGION = "us-east-2"
       }
       agent { label 'linux' }
       steps {
