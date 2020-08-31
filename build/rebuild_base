@@ -4,5 +4,4 @@ set -xue -o pipefail
 cd "${WORKSPACE}"/
 docker build -t analyzere-python-base:latest -f Dockerfile.base .
 docker tag analyzere-python-base:latest 753029624111.dkr.ecr.us-east-2.amazonaws.com/analyzere-python-base:latest
-$(aws ecr get-login --no-include-email --region us-east-2)
 docker push 753029624111.dkr.ecr.us-east-2.amazonaws.com/analyzere-python-base:latest
