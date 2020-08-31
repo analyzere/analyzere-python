@@ -10,7 +10,13 @@ pipeline {
       }
       agent { label 'linux' }
       steps {
-        withCredentials([usernamePassword(credentialsId: '8e64020a-fe1f-4fb5-865c-2fcfdacea39e', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+        withAWS(){
+          script{$
+              def login = ecrLogin()$
+              sh("echo ${login}")$
+              sh("${login}")$
+              debug_env()$
+          }$
           sh("$WORKSPACE/build/tests")
         } // End of Credentials
       } // steps

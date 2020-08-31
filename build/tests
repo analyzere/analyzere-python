@@ -2,8 +2,8 @@
 set -xue -o pipefail
 
 cd "${WORKSPACE}"
-echo "Logging onto AWS ECR to pull base image"
-$(aws ecr get-login --no-include-email --region us-east-1)
+#echo "Logging onto AWS ECR to pull base image"
+#$(aws ecr get-login --no-include-email --region us-east-1)
 echo "Building test image"
 docker build -t version_tester:latest .
 [ -d artifacts ] || mkdir -p artifacts
