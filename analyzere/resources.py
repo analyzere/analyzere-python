@@ -42,6 +42,14 @@ class ExchangeRateTable(DataResource):
         return convert_to_analyzere_object(resp)
 
 
+class ExchangeRateDateRule(EmbeddedResource):
+    pass
+
+
+class ExchangeRateLatestRule(EmbeddedResource):
+    pass
+
+
 class ExchangeRateSelectionRule(EmbeddedResource):
     pass
 

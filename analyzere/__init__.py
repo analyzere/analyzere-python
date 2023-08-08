@@ -15,6 +15,8 @@ from analyzere.resources import (  # noqa
     ExchangeRateProfile,
     ExchangeRateSelectionRule,
     ExchangeRateTable,
+    ExchangeRateDateRule,
+    ExchangeRateLatestRule,
     Fee,
     FeeReference,
     InuringTerms,
