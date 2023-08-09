@@ -16,6 +16,7 @@ pipeline {
               sh("echo ${login}")
               sh("${login}")
               sh("$WORKSPACE/build/tests")
+              sh("$WORKSPACE/build/flake8")
           }
         } // End of Credentials
       } // steps

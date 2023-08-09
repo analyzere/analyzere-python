@@ -1,0 +1,4 @@
+#!/bin/bash
+set -xue -o pipefail
+
+docker run tests-image:latest flake8 /analyzere/analyzere
