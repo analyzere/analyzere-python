@@ -21,7 +21,7 @@ pipeline {
       } // steps
       post {
         always {
-          junit "artifacts/*.xml"
+          junit "results/*.xml"
         }
       }
     } // Test stage

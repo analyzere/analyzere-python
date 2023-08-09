@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "analyzere"
+version = "0.6.0"
+description = ""
+authors = ["Developers <dev@analyzere.com>"]
+readme = "README.rst"
+packages = [
+    { include = "analyzere" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.8.1"
+lazy-object-proxy = "^1.9.0"
+requests = "^2.31.0"
+six = "^1.16.0"
+
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "^6.1.0"
+mock = "^5.1.0"
+pytest = "^7.4.0"
+requests-mock = "^1.11.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
