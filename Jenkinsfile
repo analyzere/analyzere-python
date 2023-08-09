@@ -8,7 +8,7 @@ pipeline {
         WORKSPACE = "${workspace}"
         AWS_DEFAULT_REGION = "us-east-2"
       }
-      agent { label 'linux' }
+      agent { label 'lightweight' }
       steps {
         withAWS(){
           script{
