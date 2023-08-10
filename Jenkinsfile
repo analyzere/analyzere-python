@@ -8,7 +8,7 @@ pipeline {
         WORKSPACE = "${workspace}"
         AWS_DEFAULT_REGION = "us-east-2"
       }
-      agent { label 'linux' }
+      agent { label 'lightweight' }
       steps {
         withAWS(){
           script{
@@ -16,12 +16,13 @@ pipeline {
               sh("echo ${login}")
               sh("${login}")
               sh("$WORKSPACE/build/tests")
+              sh("$WORKSPACE/build/flake8")
           }
         } // End of Credentials
       } // steps
       post {
         always {
-          junit "artifacts/*.xml"
+          junit "results/*.xml"
         }
       }
     } // Test stage

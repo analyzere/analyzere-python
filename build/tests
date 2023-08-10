@@ -3,10 +3,7 @@ set -xue -o pipefail
 
 cd "${WORKSPACE}"
 echo "Building test image"
-docker build -t version_tester:latest .
-[ -d artifacts ] || mkdir -p artifacts
-chmod a+rwx artifacts
-chown -R `id -u $USER`:`id -u $USER` artifacts
+docker build -t tests-image:latest .
+[ -d results ] || mkdir -p results
 echo "Running Tests"
-docker run --rm -v ${PWD}/artifacts:/analyzere/artifacts version_tester:latest
-
+docker run -v "${PWD}/results":/results/ --rm tests-image:latest

@@ -1,3 +1,0 @@
-lazy-object-proxy>=1.0,<2
-requests>=2.3,<3
-six>=1.9,<2
