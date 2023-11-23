@@ -8,6 +8,9 @@ import analyzere
 from analyzere import errors, utils
 
 
+session = requests.Session()
+
+
 def handle_api_error(resp, code):
     body = resp.text
     json_body = None
@@ -75,7 +78,7 @@ def request_raw(method, path, params=None, body=None, headers=None,
     if username and password:
         kwargs['auth'] = (username, password)
 
-    resp = requests.request(method, urljoin(analyzere.base_url, path),
+    resp = session.request(method, urljoin(analyzere.base_url, path),
                             **kwargs)
 
     # Handle HTTP 503 with the Retry-After header by automatically retrying
@@ -84,7 +87,7 @@ def request_raw(method, path, params=None, body=None, headers=None,
     while auto_retry and (resp.status_code == 503 and retry_after):
         time.sleep(float(retry_after))
         # Repeat original request after Retry-After time has elapsed.
-        resp = requests.request(method, urljoin(analyzere.base_url, path),
+        resp = session.request(method, urljoin(analyzere.base_url, path),
                                 **kwargs)
         retry_after = resp.headers.get('Retry-After')
 
