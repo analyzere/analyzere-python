@@ -17,10 +17,17 @@ Usage
 Please see http://docs.analyzere.net/?python for the most up-to-date
 documentation.
 
+Package Management
+---------------------
+
+The Analyze Re Python Client uses `Poetry <https://python-poetry.org/>`_ for
+package and dependency management. Poetry can be easily installed
+using either `pip` or `conda`.
+
 Testing
 -------
 
-`pytest` or `py.test`
+`poetry run pytest` (or) `poetry run py.test`
 
 Increment version
 -----------------
@@ -31,7 +38,9 @@ Testing Publication
 -------------------
 
 `poetry build`
-`poetry config.repositories.testpypi https://test.pypi.org`
+
+`poetry config repositories.testpypi https://test.pypi.org/legacy/`
+
 `poetry publish --repository testpypi`
 
 Publishing
