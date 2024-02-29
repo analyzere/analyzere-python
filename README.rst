@@ -41,11 +41,12 @@ Testing Publication
 
 `poetry config repositories.testpypi https://test.pypi.org/legacy/`
 
-`poetry publish --repository testpypi`
+`poetry publish --repository testpypi --username __token__ --password <token_value>`
+
 
 Publishing
 ----------
 
 `poetry build`
 
-`poetry publish`
+`poetry publish --username __token__ --password <token_value>`
