@@ -3,6 +3,8 @@ Contributing
 
 Contributions are always welcome and credit will be given.
 
+test
+
 Bug reports
 ===========
 
