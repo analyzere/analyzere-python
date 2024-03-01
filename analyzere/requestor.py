@@ -7,6 +7,8 @@ from six.moves.urllib.parse import urljoin
 import analyzere
 from analyzere import errors, utils
 
+session = requests.Session()
+
 
 def handle_api_error(resp, code):
     body = resp.text
@@ -75,8 +77,8 @@ def request_raw(method, path, params=None, body=None, headers=None,
     if username and password:
         kwargs['auth'] = (username, password)
 
-    resp = requests.request(method, urljoin(analyzere.base_url, path),
-                            **kwargs)
+    resp = session.request(method, urljoin(analyzere.base_url, path),
+                           **kwargs)
 
     # Handle HTTP 503 with the Retry-After header by automatically retrying
     # request after sleeping for the recommended amount of time
@@ -84,8 +86,8 @@ def request_raw(method, path, params=None, body=None, headers=None,
     while auto_retry and (resp.status_code == 503 and retry_after):
         time.sleep(float(retry_after))
         # Repeat original request after Retry-After time has elapsed.
-        resp = requests.request(method, urljoin(analyzere.base_url, path),
-                                **kwargs)
+        resp = session.request(method, urljoin(analyzere.base_url, path),
+                               **kwargs)
         retry_after = resp.headers.get('Retry-After')
 
     if handle_errors and (not 200 <= resp.status_code < 300):
