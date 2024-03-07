@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "analyzere"
-version = "0.7.0"
+version = "0.7.1"
 description = ""
 authors = ["Developers <dev@analyzere.com>"]
 readme = "README.rst"
@@ -9,13 +9,13 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
+python = "^3.8"
 lazy-object-proxy = "^1.9.0"
 requests = "^2.31.0"
 six = "^1.16.0"
 
 [tool.poetry.group.dev.dependencies]
-flake8 = "^6.1.0"
+flake8 = "^4.0.1"
 mock = "^5.1.0"
 pytest = "^7.4.0"
 requests-mock = "^1.11.0"
