@@ -1,7 +1,9 @@
 import json
 import time
+from urllib.parse import urlparse
 
 import requests
+import http.client
 from six.moves.urllib.parse import urljoin
 
 import analyzere
@@ -63,6 +65,38 @@ def request(method, path, params=None, data=None, auto_retry=True):
     return content
 
 
+def get_token():
+    token_url = urlparse(analyzere.okta_token_url)
+
+    conn = http.client.HTTPSConnection(token_url.hostname)
+
+    payload = (f"grant_type=client_credentials"
+               f"&client_id={analyzere.okta_client_id}"
+               f"&client_secret={analyzere.okta_client_secret}"
+               f"&scope={analyzere.okta_scope}")
+
+    headers = {'content-type': "application/x-www-form-urlencoded"}
+
+    conn.request("POST",  token_url.path, payload, headers)
+
+    res = conn.getresponse()
+    data = res.read()
+
+    # TODO: Return Token and expiry for refresh
+    print(data.decode("utf-8"))
+
+
+class M2MBearerAuth(requests.auth.AuthBase):
+    def __init__(self):
+        self.token = get_token()
+
+    def __call__(self, r):
+        # TODO: Refresh
+
+        r.headers["authorization"] = "Bearer " + self.token
+        return r
+
+
 def request_raw(method, path, params=None, body=None, headers=None,
                 handle_errors=True, auto_retry=True):
     kwargs = {
@@ -76,6 +110,10 @@ def request_raw(method, path, params=None, body=None, headers=None,
     password = analyzere.password
     if username and password:
         kwargs['auth'] = (username, password)
+    elif analyzere.okta_client_id and analyzere.okta_client_secret:
+        kwargs['auth'] = M2MBearerAuth()
+    # elif analyzere.okta_client_id and analyzere.okta_client_secret:
+    #     kwargs['auth'] = U2MBearerAuth()
 
     resp = session.request(method, urljoin(analyzere.base_url, path),
                            **kwargs)
