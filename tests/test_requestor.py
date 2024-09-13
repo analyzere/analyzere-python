@@ -5,7 +5,8 @@ import mock
 
 import analyzere
 from analyzere import AuthenticationError, InvalidRequestError, ServerError
-from analyzere.requestor import handle_api_error, request, request_raw
+import analyzere.requestor
+from analyzere.requestor import handle_api_error, request, request_raw, BearerAuth
 
 
 class TestErrorHandling:
@@ -97,6 +98,26 @@ class TestRequest:
             request('get', 'bar')
 
 
+def setup_client_credentials(reqmock):
+    reqmock.get('https://api/bar', status_code=200)
+
+    analyzere.okta_token_url = 'https://does-not-matter-url'
+    analyzere.okta_client_id = 'does-not-matter-client-id'
+    analyzere.okta_client_secret = 'does-not-matter-secret'
+    analyzere.okta_m2m_scope = 'does-not-matter-scope'
+
+
+def teardown_client_credentials(reqmock):
+    analyzere.okta_token_url = ''
+    analyzere.okta_client_id = ''
+    analyzere.okta_client_secret = ''
+    analyzere.okta_m2m_scope = ''
+
+    reqmock.reset()
+
+    analyzere.requestor.bearer_auth = BearerAuth()
+
+
 class TestRequestRaw:
     def setup_method(self, _):
         analyzere.base_url = 'https://api'
@@ -104,15 +125,73 @@ class TestRequestRaw:
     def teardown_method(self, _):
         analyzere.base_url = ''
 
-    def test_authentication(self, reqmock):
+    def test_basic_authentication(self, reqmock):
         reqmock.get('https://api/bar', status_code=200)
 
         analyzere.username = 'user'
         analyzere.password = 'pa55'
         request_raw('get', 'bar')
 
-        assert (reqmock.last_request.headers['Authorization'] == 'Basic %s'
-                % base64.b64encode(b'user:pa55').decode('ascii'))
+        assert reqmock.last_request.headers['Authorization'] == f"Basic {base64.b64encode(b'user:pa55').decode('ascii')}"
+
+        # Reset for other tests
+        analyzere.username = ''
+        analyzere.password = ''
+
+    def test_bearer_authentication(self, reqmock):
+        reqmock.get('https://api/bar', status_code=200)
+
+        analyzere.bearer_auth_token = 's1234567890'
+        request_raw('get', 'bar')
+
+        assert reqmock.last_request.headers['Authorization'] == f'Bearer {analyzere.bearer_auth_token}'
+
+        # Reset for other tests
+        analyzere.bearer_auth_token = ''
+        analyzere.requestor.bearer_auth = BearerAuth()
+
+    def test_client_credentials_authentication(self, reqmock):
+        setup_client_credentials(reqmock)
+
+        mock_token = 's000'
+        reqmock.post(analyzere.okta_token_url, text=f'{{"access_token": "{mock_token}", "expires_in": 3600}}')
+
+        request_raw('get', 'bar')
+
+        # One GET to API root, one POST to token URL
+        assert reqmock.last_request.headers['Authorization'] == f'Bearer {mock_token}'
+        assert reqmock.call_count == 2
+
+        # No token refresh
+        request_raw('get', 'bar')
+        assert reqmock.call_count == 3
+        assert reqmock.last_request.url == 'https://api/bar'
+        assert reqmock.last_request.headers['Authorization'] == f'Bearer {mock_token}'
+
+        teardown_client_credentials(reqmock)
+
+    def test_client_credentials_authentication_refresh(self, reqmock):
+        setup_client_credentials(reqmock)
+
+        first_mock_token = 's001'
+        reqmock.post(analyzere.okta_token_url, text=f'{{"access_token": "{first_mock_token}", "expires_in": 1}}')
+
+        request_raw('get', 'bar')
+
+        # One GET to API root, one POST to token URL
+        assert reqmock.last_request.headers['Authorization'] == f'Bearer {first_mock_token}'
+        assert reqmock.call_count == 2
+
+        # Mock a second token and make another request
+        second_mock_token = 's002'
+        reqmock.post(analyzere.okta_token_url, text=f'{{"access_token": "{second_mock_token}", "expires_in": 1}}')
+        request_raw('get', 'bar')
+
+        # Additional GET to API root, additional POST to token URL
+        assert reqmock.last_request.headers['Authorization'] == f'Bearer {second_mock_token}'
+        assert reqmock.call_count == 4
+
+        teardown_client_credentials(reqmock)
 
     def test_request_with_params(self, reqmock):
         reqmock.get('https://api/bar', status_code=200)
