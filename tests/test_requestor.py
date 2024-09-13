@@ -5,8 +5,7 @@ import mock
 
 import analyzere
 from analyzere import AuthenticationError, InvalidRequestError, ServerError
-import analyzere.requestor
-from analyzere.requestor import handle_api_error, request, request_raw, BearerAuth
+from analyzere.requestor import handle_api_error, request, request_raw
 
 
 class TestErrorHandling:
@@ -101,22 +100,19 @@ class TestRequest:
 def setup_client_credentials(reqmock):
     reqmock.get('https://api/bar', status_code=200)
 
-    analyzere.okta_token_url = 'https://does-not-matter-url'
-    analyzere.okta_client_id = 'does-not-matter-client-id'
-    analyzere.okta_client_secret = 'does-not-matter-secret'
-    analyzere.okta_m2m_scope = 'does-not-matter-scope'
+    analyzere.oauth_token_url = 'https://does-not-matter-url'
+    analyzere.oauth_client_id = 'does-not-matter-client-id'
+    analyzere.oauth_client_secret = 'does-not-matter-secret'
+    analyzere.oauth_scope = 'does-not-matter-scope'
 
 
 def teardown_client_credentials(reqmock):
-    analyzere.okta_token_url = ''
-    analyzere.okta_client_id = ''
-    analyzere.okta_client_secret = ''
-    analyzere.okta_m2m_scope = ''
+    analyzere.oauth_token_url = ''
+    analyzere.oauth_client_id = ''
+    analyzere.oauth_client_secret = ''
+    analyzere.oauth_scope = ''
 
     reqmock.reset()
-
-    # Forced reset of bearer auth instance to avoid re-use of non-expired key between tests
-    analyzere.requestor.bearer_auth = BearerAuth()
 
 
 class TestRequestRaw:
@@ -154,7 +150,7 @@ class TestRequestRaw:
         setup_client_credentials(reqmock)
 
         mock_token = 's000'
-        reqmock.post(analyzere.okta_token_url, text=f'{{"access_token": "{mock_token}", "expires_in": 3600}}')
+        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{mock_token}", "expires_in": 3600}}')
 
         request_raw('get', 'bar')
 
@@ -164,6 +160,7 @@ class TestRequestRaw:
 
         # No token refresh
         request_raw('get', 'bar')
+
         assert reqmock.call_count == 3
         assert reqmock.last_request.url == 'https://api/bar'
         assert reqmock.last_request.headers['Authorization'] == f'Bearer {mock_token}'
@@ -174,7 +171,7 @@ class TestRequestRaw:
         setup_client_credentials(reqmock)
 
         first_mock_token = 's001'
-        reqmock.post(analyzere.okta_token_url, text=f'{{"access_token": "{first_mock_token}", "expires_in": 1}}')
+        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{first_mock_token}", "expires_in": 1}}')
 
         request_raw('get', 'bar')
 
@@ -184,7 +181,7 @@ class TestRequestRaw:
 
         # Mock a second token and make another request
         second_mock_token = 's002'
-        reqmock.post(analyzere.okta_token_url, text=f'{{"access_token": "{second_mock_token}", "expires_in": 1}}')
+        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{second_mock_token}", "expires_in": 1}}')
         request_raw('get', 'bar')
 
         # Additional GET to API root, additional POST to token URL

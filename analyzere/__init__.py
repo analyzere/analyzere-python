@@ -8,10 +8,10 @@ password = ''
 bearer_auth_token = ''
 
 # - 3: Client Credentials
-okta_token_url = ''
-okta_client_id = ''
-okta_client_secret = ''
-okta_m2m_scope = ''
+oauth_token_url = ''
+oauth_client_id = ''
+oauth_client_secret = ''
+oauth_scope = ''
 
 # Config
 base_url = 'http://localhost:8000/'

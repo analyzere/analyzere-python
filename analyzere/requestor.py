@@ -2,12 +2,13 @@ import json
 import time
 
 import requests
+from oauthlib.oauth2 import BackendApplicationClient
+from requests_oauthlib import OAuth2Session
 from six.moves.urllib.parse import urljoin
 
 import analyzere
 from analyzere import errors, utils
 
-TOKEN_EXPIRY_BUFFER = 120
 
 session = requests.Session()
 
@@ -65,54 +66,29 @@ def request(method, path, params=None, data=None, auto_retry=True):
     return content
 
 
-def post_to_url(url, payload):
-    token_session = requests.Session()
-    headers = {'content-type': "application/x-www-form-urlencoded"}
-
-    resp = token_session.request("POST", url, payload, headers)
-    return resp.text
-
-
-def request_token(payload):
-    response_dict = json.loads(post_to_url(analyzere.okta_token_url, payload))
-    return response_dict["access_token"], response_dict["expires_in"]
-
-
-def get_client_credentials_token():
-    payload = (f"grant_type=client_credentials"
-               f"&client_id={analyzere.okta_client_id}"
-               f"&client_secret={analyzere.okta_client_secret}"
-               f"&scope={analyzere.okta_m2m_scope}")
-
-    return request_token(payload)
-
-
 class BearerAuth:
     def __init__(self):
-        self.token = None
-        self.expiry = None
+        self.oauth = None
 
-    def _set_token_and_expiry(self):
-        if analyzere.bearer_auth_token:
-            self.token = analyzere.bearer_auth_token
-
-        else:
-            self.token, expiry = get_client_credentials_token()
-            self.expiry = time.time() + expiry
+    def _set_oauth_client(self):
+        client = BackendApplicationClient(client_id=analyzere.oauth_client_id)
+        self.oauth = OAuth2Session(client=client)
 
     def get_auth_header(self):
-        # Initialize if:
-        # - we haven't yet set a token, or
-        # - we have a client id but no expiry (user may have switched from providing the token to Client Credentials)
-        if not self.token or (not self.expiry and analyzere.okta_client_id):
-            self._set_token_and_expiry()
+        token = analyzere.bearer_auth_token
+        if not token:
+            if not self.oauth or (self.oauth.client_id != analyzere.oauth_client_id):
+                self._set_oauth_client()
 
-        # Refresh token if close to expiring
-        elif analyzere.okta_client_id and (time.time() > (self.expiry - TOKEN_EXPIRY_BUFFER)):
-            self._set_token_and_expiry()
+            token_result = self.oauth.fetch_token(
+                token_url=analyzere.oauth_token_url,
+                client_id=analyzere.oauth_client_id,
+                client_secret=analyzere.oauth_client_secret,
+                scope=analyzere.oauth_scope)
+            token = token_result["access_token"]
+            expires_in = token_result["expires_in"]
 
-        auth_header = {"authorization": "Bearer " + self.token}
-        return auth_header
+        return {"authorization": "Bearer " + token}
 
 
 bearer_auth = BearerAuth()
@@ -131,7 +107,7 @@ def request_raw(method, path, params=None, body=None, headers=None,
     password = analyzere.password
     if username and password:
         kwargs['auth'] = (username, password)
-    elif analyzere.bearer_auth_token or analyzere.okta_client_id:
+    elif analyzere.bearer_auth_token or analyzere.oauth_client_id:
         if kwargs['headers']:
             kwargs['headers'] = {**kwargs['headers'], **bearer_auth.get_auth_header()}
         else:
