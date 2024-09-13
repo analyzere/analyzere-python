@@ -8,6 +8,8 @@ from six.moves.urllib.parse import urljoin
 import analyzere
 from analyzere import errors, utils
 
+TOKEN_EXPIRY_BUFFER = 120
+
 session = requests.Session()
 
 
@@ -69,7 +71,6 @@ def post_to_url(url, payload):
     headers = {'content-type': "application/x-www-form-urlencoded"}
 
     resp = token_session.request("POST", url, payload, headers)
-
     return resp.text
 
 
@@ -87,28 +88,33 @@ def get_client_credentials_token():
     return request_token(payload)
 
 
-class BearerAuth(requests.auth.AuthBase):
+class BearerAuth:
     def __init__(self):
-        if analyzere.okta_client_secret:
-            self._set_token_and_expiry()
+        self.token = None
+        self.expiry = None
 
-        elif analyzere.bearer_auth_token:
+    def _set_token_and_expiry(self):
+        if analyzere.bearer_auth_token:
             self.token = analyzere.bearer_auth_token
 
         else:
-            raise errors.AuthenticationError('No authentication method provided.')
+            self.token, expiry = get_client_credentials_token()
+            self.expiry = time.time() + expiry
 
-    def __call__(self, r):
-        # Refresh token if close to expiring
-        if analyzere.okta_client_secret and (time.time() > (self.expiry - 120)):
+    def get_auth_header(self):
+        # Set token if not initialized
+        if not self.token:
             self._set_token_and_expiry()
 
-        r.headers["authorization"] = "Bearer " + self.token
-        return r
+        # Refresh token if close to expiring
+        elif analyzere.okta_client_id and (time.time() > (self.expiry - TOKEN_EXPIRY_BUFFER)):
+            self._set_token_and_expiry()
 
-    def _set_token_and_expiry(self):
-        self.token, expiry = get_client_credentials_token()
-        self.expiry = time.time() + expiry
+        auth_header = {"authorization": "Bearer " + self.token}
+        return auth_header
+
+
+bearer_auth = BearerAuth()
 
 
 def request_raw(method, path, params=None, body=None, headers=None,
@@ -125,7 +131,10 @@ def request_raw(method, path, params=None, body=None, headers=None,
     if username and password:
         kwargs['auth'] = (username, password)
     elif analyzere.bearer_auth_token or analyzere.okta_client_id:
-        kwargs['auth'] = BearerAuth()
+        if kwargs['headers']:
+            kwargs['headers'] = {**kwargs['headers'], **bearer_auth.get_auth_header()}
+        else:
+            kwargs['headers'] = bearer_auth.get_auth_header()
 
     resp = session.request(method, urljoin(analyzere.base_url, path),
                            **kwargs)
