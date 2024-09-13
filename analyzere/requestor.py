@@ -102,8 +102,10 @@ class BearerAuth:
             self.expiry = time.time() + expiry
 
     def get_auth_header(self):
-        # Set token if not initialized
-        if not self.token:
+        # Initialize if:
+        # - we haven't yet set a token, or
+        # - we have a client id but no expiry (user may have switched from providing the token to Client Credentials)
+        if not self.token or (not self.expiry and analyzere.okta_client_id):
             self._set_token_and_expiry()
 
         # Refresh token if close to expiring

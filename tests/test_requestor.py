@@ -115,6 +115,7 @@ def teardown_client_credentials(reqmock):
 
     reqmock.reset()
 
+    # Forced reset of bearer auth instance to avoid re-use of non-expired key between tests
     analyzere.requestor.bearer_auth = BearerAuth()
 
 
@@ -148,7 +149,6 @@ class TestRequestRaw:
 
         # Reset for other tests
         analyzere.bearer_auth_token = ''
-        analyzere.requestor.bearer_auth = BearerAuth()
 
     def test_client_credentials_authentication(self, reqmock):
         setup_client_credentials(reqmock)
