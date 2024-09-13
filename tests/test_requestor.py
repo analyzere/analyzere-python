@@ -5,7 +5,7 @@ import mock
 
 import analyzere
 from analyzere import AuthenticationError, InvalidRequestError, ServerError
-from analyzere.requestor import handle_api_error, request, request_raw
+from analyzere.requestor import handle_api_error, request, request_raw, BearerAuth
 
 
 class TestErrorHandling:
@@ -114,6 +114,9 @@ def teardown_client_credentials(reqmock):
 
     reqmock.reset()
 
+    # Forced reset of bearer auth instance to avoid re-use of non-expired key between tests
+    analyzere.requestor.bearer_auth = BearerAuth()
+
 
 class TestRequestRaw:
     def setup_method(self, _):
@@ -171,7 +174,7 @@ class TestRequestRaw:
         setup_client_credentials(reqmock)
 
         first_mock_token = 's001'
-        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{first_mock_token}", "expires_in": 1}}')
+        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{first_mock_token}", "expires_in": -1}}')
 
         request_raw('get', 'bar')
 
@@ -181,7 +184,7 @@ class TestRequestRaw:
 
         # Mock a second token and make another request
         second_mock_token = 's002'
-        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{second_mock_token}", "expires_in": 1}}')
+        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{second_mock_token}", "expires_in": -1}}')
         request_raw('get', 'bar')
 
         # Additional GET to API root, additional POST to token URL

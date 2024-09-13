@@ -69,26 +69,31 @@ def request(method, path, params=None, data=None, auto_retry=True):
 class BearerAuth:
     def __init__(self):
         self.oauth = None
+        self.token = None
+        self.expiry = None
 
     def _set_oauth_client(self):
         client = BackendApplicationClient(client_id=analyzere.oauth_client_id)
         self.oauth = OAuth2Session(client=client)
 
     def get_auth_header(self):
-        token = analyzere.bearer_auth_token
-        if not token:
-            if not self.oauth or (self.oauth.client_id != analyzere.oauth_client_id):
-                self._set_oauth_client()
+        if analyzere.bearer_auth_token:
+            self.token = analyzere.bearer_auth_token
+        else:
+            # Refresh token if uninitialized or expired
+            if not self.expiry or time.time() > self.expiry:
+                if not self.oauth or (self.oauth.client_id != analyzere.oauth_client_id):
+                    self._set_oauth_client()
 
-            token_result = self.oauth.fetch_token(
-                token_url=analyzere.oauth_token_url,
-                client_id=analyzere.oauth_client_id,
-                client_secret=analyzere.oauth_client_secret,
-                scope=analyzere.oauth_scope)
-            token = token_result["access_token"]
-            expires_in = token_result["expires_in"]
+                token_result = self.oauth.fetch_token(
+                    token_url=analyzere.oauth_token_url,
+                    client_id=analyzere.oauth_client_id,
+                    client_secret=analyzere.oauth_client_secret,
+                    scope=analyzere.oauth_scope)
+                self.token = token_result["access_token"]
+                self.expiry = time.time() + token_result["expires_in"]
 
-        return {"authorization": "Bearer " + token}
+        return {"authorization": "Bearer " + self.token}
 
 
 bearer_auth = BearerAuth()
