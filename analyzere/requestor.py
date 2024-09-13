@@ -94,8 +94,7 @@ def get_client_credentials_token():
 class BearerAuth(requests.auth.AuthBase):
     def __init__(self):
         if analyzere.okta_client_secret:
-            self.token, expiry = get_client_credentials_token()
-            self.expiry = time.time() + expiry
+            self._set_token_and_expiry()
 
         elif analyzere.bearer_auth_token:
             self.token = analyzere.bearer_auth_token
@@ -104,12 +103,16 @@ class BearerAuth(requests.auth.AuthBase):
             raise errors.AuthenticationError('No authentication method provided.')
 
     def __call__(self, r):
+        # Refresh token if close to expiring
         if analyzere.okta_client_secret and (time.time() > (self.expiry - 120)):
-            # TODO: Refresh
-            pass
+            self._set_token_and_expiry()
 
         r.headers["authorization"] = "Bearer " + self.token
         return r
+
+    def _set_token_and_expiry(self):
+        self.token, expiry = get_client_credentials_token()
+        self.expiry = time.time() + expiry
 
 
 def request_raw(method, path, params=None, body=None, headers=None,
