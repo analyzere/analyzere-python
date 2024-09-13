@@ -65,33 +65,48 @@ def request(method, path, params=None, data=None, auto_retry=True):
     return content
 
 
-def get_token():
-    token_url = urlparse(analyzere.okta_token_url)
+def post_to_url(url, payload):
+    url = urlparse(url)
+    conn = http.client.HTTPSConnection(url.hostname)
+    headers = {'content-type': "application/x-www-form-urlencoded"}
 
-    conn = http.client.HTTPSConnection(token_url.hostname)
+    conn.request("POST", url.path, payload, headers)
 
+    res = conn.getresponse()
+
+    return res.read().decode("utf-8")
+
+
+def request_token(payload):
+    response_dict = json.loads(post_to_url(analyzere.okta_token_url, payload))
+    return response_dict["access_token"], response_dict["expires_in"]
+
+
+def get_client_credentials_token():
     payload = (f"grant_type=client_credentials"
                f"&client_id={analyzere.okta_client_id}"
                f"&client_secret={analyzere.okta_client_secret}"
-               f"&scope={analyzere.okta_scope}")
+               f"&scope={analyzere.okta_m2m_scope}")
 
-    headers = {'content-type': "application/x-www-form-urlencoded"}
-
-    conn.request("POST",  token_url.path, payload, headers)
-
-    res = conn.getresponse()
-    data = res.read()
-
-    # TODO: Return Token and expiry for refresh
-    print(data.decode("utf-8"))
+    return request_token(payload)
 
 
-class M2MBearerAuth(requests.auth.AuthBase):
+class BearerAuth(requests.auth.AuthBase):
     def __init__(self):
-        self.token = get_token()
+        if analyzere.okta_client_secret:
+            self.token, expiry = get_client_credentials_token()
+            self.expiry = time.time() + expiry
+
+        elif analyzere.bearer_auth_token:
+            self.token = analyzere.bearer_auth_token
+
+        else:
+            raise errors.AuthenticationError('No authentication method provided.')
 
     def __call__(self, r):
-        # TODO: Refresh
+        if analyzere.okta_client_secret and (time.time() > (self.expiry - 120)):
+            # TODO: Refresh
+            pass
 
         r.headers["authorization"] = "Bearer " + self.token
         return r
@@ -110,10 +125,8 @@ def request_raw(method, path, params=None, body=None, headers=None,
     password = analyzere.password
     if username and password:
         kwargs['auth'] = (username, password)
-    elif analyzere.okta_client_id and analyzere.okta_client_secret:
-        kwargs['auth'] = M2MBearerAuth()
-    # elif analyzere.okta_client_id and analyzere.okta_client_secret:
-    #     kwargs['auth'] = U2MBearerAuth()
+    elif analyzere.bearer_auth_token or analyzere.okta_client_id:
+        kwargs['auth'] = BearerAuth()
 
     resp = session.request(method, urljoin(analyzere.base_url, path),
                            **kwargs)

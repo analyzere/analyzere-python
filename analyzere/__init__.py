@@ -1,5 +1,19 @@
+# Authentication options
+
+# - 1: Basic Auth
 username = ''
 password = ''
+
+# - 2: Provide bearer token directly
+bearer_auth_token = ''
+
+# - 3: Client Credentials
+okta_token_url = ''
+okta_client_id = ''
+okta_client_secret = ''
+okta_m2m_scope = ''
+
+# Config
 base_url = 'http://localhost:8000/'
 upload_poll_interval = 0.1
 one_megabyte = 2**20
