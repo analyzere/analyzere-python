@@ -3,7 +3,6 @@ import time
 from urllib.parse import urlparse
 
 import requests
-import http.client
 from six.moves.urllib.parse import urljoin
 
 import analyzere
@@ -66,15 +65,12 @@ def request(method, path, params=None, data=None, auto_retry=True):
 
 
 def post_to_url(url, payload):
-    url = urlparse(url)
-    conn = http.client.HTTPSConnection(url.hostname)
+    token_session = requests.Session()
     headers = {'content-type': "application/x-www-form-urlencoded"}
 
-    conn.request("POST", url.path, payload, headers)
+    resp = token_session.request("POST", url, payload, headers)
 
-    res = conn.getresponse()
-
-    return res.read().decode("utf-8")
+    return resp.text
 
 
 def request_token(payload):
