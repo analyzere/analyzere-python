@@ -2,7 +2,7 @@ import json
 import time
 
 import requests
-from oauthlib.oauth2 import BackendApplicationClient
+from oauthlib.oauth2 import BackendApplicationClient, TokenExpiredError
 from requests_oauthlib import OAuth2Session
 from six.moves.urllib.parse import urljoin
 
@@ -80,6 +80,7 @@ def request_raw(method, path, params=None, body=None, headers=None,
 
     session = direct_auth_session
     global oauth_session
+    oauth_kwargs = {}
 
     # Basic Auth
     if analyzere.username and analyzere.password:
@@ -95,21 +96,34 @@ def request_raw(method, path, params=None, body=None, headers=None,
 
     # Client Credentials
     elif analyzere.oauth_client_id:
+        oauth_kwargs = {
+            "include_client_id": True,
+            "client_secret": analyzere.oauth_client_secret
+        }
+
         if not oauth_session or oauth_session.client_id != analyzere.oauth_client_id:
-            oauth_session = OAuth2Session(client=BackendApplicationClient(client_id=analyzere.oauth_client_id),
-                                          auto_refresh_url=analyzere.oauth_token_url,
-                                          token_updater=lambda _: None)
-            oauth_session.fetch_token(analyzere.oauth_token_url,
-                                      client_secret=analyzere.oauth_client_secret,
-                                      scope=analyzere.oauth_scope)
+            oauth_session = OAuth2Session(client=BackendApplicationClient(client_id=analyzere.oauth_client_id,
+                                                                          scope=analyzere.oauth_scope))
+            oauth_session.fetch_token(analyzere.oauth_token_url, **oauth_kwargs)
 
         session = oauth_session
 
-    resp = session.request(
-        method,
-        url,
-        **kwargs
-    )
+    try:
+        resp = session.request(
+            method,
+            url,
+            **kwargs
+        )
+    # Raised by Client Credentials flow if the token expired
+    # Not using auto-refresh because that sends a request of grant type `refresh_token`, and
+    # Client Credentials doesn't support refresh tokens.
+    except TokenExpiredError:
+        oauth_session.fetch_token(analyzere.oauth_token_url, **oauth_kwargs)
+        resp = session.request(
+            method,
+            url,
+            **kwargs
+        )
 
     # Handle HTTP 503 with the Retry-After header by automatically retrying
     # request after sleeping for the recommended amount of time

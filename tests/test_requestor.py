@@ -99,13 +99,12 @@ class TestRequest:
 
 
 class TestClientCredentialsOAuth:
-    def __init__(self):
+    def setup_method(self, _):
         self.api_path = 'bar'
         self.api_url = f'https://api/{self.api_path}'
 
-    def setup_method(self, _):
         analyzere.base_url = 'https://api'
-        analyzere.oauth_token_url = 'https://does-not-matter-url'
+        analyzere.oauth_token_url = 'https://does-not-matter-url/'
         analyzere.oauth_client_id = 'does-not-matter-client-id'
         analyzere.oauth_client_secret = 'does-not-matter-secret'
         analyzere.oauth_scope = 'does-not-matter-scope'
@@ -122,6 +121,12 @@ class TestClientCredentialsOAuth:
         # Avoid token re-use between tests
         analyzere.requestor.oauth_session = None
 
+    def _validate_token_params(self, request_text):
+        assert 'grant_type=client_credentials' in request_text
+        assert f'client_id={analyzere.oauth_client_id}' in request_text
+        assert f'client_secret={analyzere.oauth_client_secret}' in request_text
+        assert f'scope={analyzere.oauth_scope}' in request_text
+
     def _make_first_request_with_token(self, reqmock, mock_token, expires_in):
         reqmock.get(self.api_url, status_code=200)
 
@@ -132,8 +137,9 @@ class TestClientCredentialsOAuth:
         # One POST to token URL, one GET to API with bearer auth header
         assert reqmock.call_count == 2
 
-        assert analyzere.oauth_token_url in reqmock.request_history[0].url
+        assert reqmock.request_history[0].url == analyzere.oauth_token_url
         assert reqmock.request_history[0].method == 'POST'
+        self._validate_token_params(reqmock.request_history[0].text)
 
         assert reqmock.request_history[1].url == self.api_url
         assert reqmock.request_history[1].method == 'GET'
@@ -170,12 +176,16 @@ class TestClientCredentialsOAuth:
 
         assert analyzere.oauth_token_url in reqmock.request_history[2].url
         assert reqmock.request_history[2].method == 'POST'
+        self._validate_token_params(reqmock.request_history[2].text)
 
         assert reqmock.request_history[3].url == self.api_url
         assert reqmock.request_history[3].method == 'GET'
 
         # Expect to see the new token
         assert reqmock.request_history[3].headers['Authorization'] == f'Bearer {second_mock_token}'
+
+    def test_retry_on_401(self, reqmock):
+        assert False
 
 
 class TestRequestRaw:
