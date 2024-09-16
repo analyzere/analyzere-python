@@ -185,7 +185,31 @@ class TestClientCredentialsOAuth:
         assert reqmock.request_history[3].headers['Authorization'] == f'Bearer {second_mock_token}'
 
     def test_retry_on_401(self, reqmock):
-        assert False
+        reqmock.get(self.api_url, [
+            {'status_code': 401},
+            {'status_code': 200},
+        ])
+
+        first_token = 's101'
+        second_token = 's102'
+        reqmock.post(analyzere.oauth_token_url, [
+            {'text': f'{{"access_token": "{first_token}", "expires_in": 3600}}'},
+            {'text': f'{{"access_token": "{second_token}", "expires_in": 3600}}'},
+        ])
+
+        request_raw('get', self.api_path)
+
+        assert reqmock.call_count == 4
+
+        # Get first token, try to call API
+        assert reqmock.request_history[0].url == analyzere.oauth_token_url
+        assert reqmock.request_history[1].url == self.api_url
+        assert reqmock.request_history[1].headers['Authorization'] == f'Bearer {first_token}'
+
+        # Re-fetch token after 401, re-call API with new token
+        assert reqmock.request_history[2].url == analyzere.oauth_token_url
+        assert reqmock.request_history[3].url == self.api_url
+        assert reqmock.request_history[3].headers['Authorization'] == f'Bearer {second_token}'
 
 
 class TestRequestRaw:

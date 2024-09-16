@@ -109,21 +109,19 @@ def request_raw(method, path, params=None, body=None, headers=None,
         session = oauth_session
 
     try:
-        resp = session.request(
-            method,
-            url,
-            **kwargs
-        )
+        resp = session.request(method, url, **kwargs)
     # Raised by Client Credentials flow if the token expired
     # Not using auto-refresh because that sends a request of grant type `refresh_token`, and
     # Client Credentials doesn't support refresh tokens.
     except TokenExpiredError:
         oauth_session.fetch_token(analyzere.oauth_token_url, **oauth_kwargs)
-        resp = session.request(
-            method,
-            url,
-            **kwargs
-        )
+        resp = session.request(method, url, **kwargs)
+
+    # Handle HTTP 401 for Client Credentials
+    # The token could have been invalidated before expiry, refresh and retry in that case
+    if resp.status_code == 401 and analyzere.oauth_client_id:
+        oauth_session.fetch_token(analyzere.oauth_token_url, **oauth_kwargs)
+        resp = session.request(method, url, **kwargs)
 
     # Handle HTTP 503 with the Retry-After header by automatically retrying
     # request after sleeping for the recommended amount of time
@@ -131,8 +129,7 @@ def request_raw(method, path, params=None, body=None, headers=None,
     while auto_retry and (resp.status_code == 503 and retry_after):
         time.sleep(float(retry_after))
         # Repeat original request after Retry-After time has elapsed.
-        resp = session.request(method, url,
-                               **kwargs)
+        resp = session.request(method, url, **kwargs)
         retry_after = resp.headers.get('Retry-After')
 
     if handle_errors and (not 200 <= resp.status_code < 300):
