@@ -1,5 +1,19 @@
+# Authentication options
+
+# - 1: Basic Auth
 username = ''
 password = ''
+
+# - 2: Provide bearer token directly
+bearer_auth_token = ''
+
+# - 3: Client Credentials
+oauth_token_url = ''
+oauth_client_id = ''
+oauth_client_secret = ''
+oauth_scope = ''
+
+# Config
 base_url = 'http://localhost:8000/'
 upload_poll_interval = 0.1
 one_megabyte = 2**20
