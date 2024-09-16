@@ -31,7 +31,7 @@ def handle_api_error(resp, code):
         raise errors.InvalidRequestError(message, body, code, json_body)
     elif code == 401:
         raise errors.AuthenticationError(
-            'Failed to authenticate. Please check the username and password '
+            'Failed to authenticate. Please check the credentials '
             'you provided.', body, code, json_body)
     elif code == 503:
         raise errors.RetryAfter(message, body, code, json_body)
