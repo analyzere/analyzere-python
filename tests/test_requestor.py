@@ -98,25 +98,70 @@ class TestRequest:
             request('get', 'bar')
 
 
-def setup_client_credentials(reqmock):
-    reqmock.get('https://api/bar', status_code=200)
+class TestClientCredentialsOAuth:
+    def setup_method(self, _):
+        analyzere.base_url = 'https://api'
+        analyzere.oauth_token_url = 'https://does-not-matter-url'
+        analyzere.oauth_client_id = 'does-not-matter-client-id'
+        analyzere.oauth_client_secret = 'does-not-matter-secret'
+        analyzere.oauth_scope = 'does-not-matter-scope'
 
-    analyzere.oauth_token_url = 'https://does-not-matter-url'
-    analyzere.oauth_client_id = 'does-not-matter-client-id'
-    analyzere.oauth_client_secret = 'does-not-matter-secret'
-    analyzere.oauth_scope = 'does-not-matter-scope'
+    def teardown_method(self, _):
+        analyzere.base_url = ''
+        analyzere.oauth_token_url = ''
+        analyzere.oauth_client_id = ''
+        analyzere.oauth_client_secret = ''
+        analyzere.oauth_scope = ''
 
+    @pytest.fixture(autouse=True)
+    def teardown_after_test(self):
+        # Avoid token re-use between tests
+        analyzere.requestor.oauth_session = None
 
-def teardown_client_credentials(reqmock):
-    reqmock.reset()
+    def test_client_credentials_authentication(self, reqmock):
+        reqmock.get('https://api/bar', status_code=200)
 
-    analyzere.oauth_token_url = ''
-    analyzere.oauth_client_id = ''
-    analyzere.oauth_client_secret = ''
-    analyzere.oauth_scope = ''
+        mock_token = 's000'
+        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{mock_token}", "expires_in": 3600}}')
 
-    # Avoid token re-use between tests
-    analyzere.requestor.oauth_session = None
+        request_raw('get', 'bar')
+
+        # One GET to API root, one POST to token URL
+        assert reqmock.last_request.headers['Authorization'] == f'Bearer {mock_token}'
+        assert reqmock.call_count == 2
+
+        # No token refresh
+        request_raw('get', 'bar')
+
+        assert reqmock.call_count == 3
+        assert reqmock.last_request.url == 'https://api/bar'
+        assert reqmock.last_request.headers['Authorization'] == f'Bearer {mock_token}'
+
+    def test_client_credentials_authentication_refresh(self, reqmock):
+        reqmock.get('https://api/bar', status_code=200)
+
+        first_mock_token = 's001'
+        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{first_mock_token}", "expires_in": 1}}')
+
+        request_raw('get', 'bar')
+
+        # One GET to API root, one POST to token URL
+        assert reqmock.last_request.headers['Authorization'] == f'Bearer {first_mock_token}'
+        for r in reqmock.request_history:
+            print(r.url)
+        assert reqmock.call_count == 2
+
+        # Wait for token to expire
+        time.sleep(1)
+
+        # Mock a second token and make another request
+        second_mock_token = 's002'
+        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{second_mock_token}", "expires_in": 1}}')
+        request_raw('get', 'bar')
+
+        # Additional GET to API root, additional POST to token URL
+        assert reqmock.last_request.headers['Authorization'] == f'Bearer {second_mock_token}'
+        assert reqmock.call_count == 4
 
 
 class TestRequestRaw:
@@ -149,55 +194,6 @@ class TestRequestRaw:
 
         # Reset for other tests
         analyzere.bearer_auth_token = ''
-
-    def test_client_credentials_authentication(self, reqmock):
-        setup_client_credentials(reqmock)
-
-        mock_token = 's000'
-        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{mock_token}", "expires_in": 3600}}')
-
-        request_raw('get', 'bar')
-
-        # One GET to API root, one POST to token URL
-        assert reqmock.last_request.headers['Authorization'] == f'Bearer {mock_token}'
-        assert reqmock.call_count == 2
-
-        # No token refresh
-        request_raw('get', 'bar')
-
-        assert reqmock.call_count == 3
-        assert reqmock.last_request.url == 'https://api/bar'
-        assert reqmock.last_request.headers['Authorization'] == f'Bearer {mock_token}'
-
-        teardown_client_credentials(reqmock)
-
-    def test_client_credentials_authentication_refresh(self, reqmock):
-        setup_client_credentials(reqmock)
-
-        first_mock_token = 's001'
-        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{first_mock_token}", "expires_in": 1}}')
-
-        request_raw('get', 'bar')
-
-        # One GET to API root, one POST to token URL
-        assert reqmock.last_request.headers['Authorization'] == f'Bearer {first_mock_token}'
-        for r in reqmock.request_history:
-            print(r.url)
-        assert reqmock.call_count == 2
-
-        # Wait for token to expire
-        time.sleep(1)
-
-        # Mock a second token and make another request
-        second_mock_token = 's002'
-        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{second_mock_token}", "expires_in": 1}}')
-        request_raw('get', 'bar')
-
-        # Additional GET to API root, additional POST to token URL
-        assert reqmock.last_request.headers['Authorization'] == f'Bearer {second_mock_token}'
-        assert reqmock.call_count == 4
-
-        teardown_client_credentials(reqmock)
 
     def test_request_with_params(self, reqmock):
         reqmock.get('https://api/bar', status_code=200)
