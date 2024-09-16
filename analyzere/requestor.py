@@ -10,8 +10,7 @@ import analyzere
 from analyzere import errors, utils
 
 
-direct_auth_session = requests.Session()
-oauth_session = None
+session = None
 
 
 def handle_api_error(resp, code):
@@ -67,6 +66,21 @@ def request(method, path, params=None, data=None, auto_retry=True):
     return content
 
 
+def ensure_session_exists(token_retrieval_kwargs):
+    global session
+
+    if analyzere.oauth_client_id:
+        # Ensure OAuth Session
+        if not session or (not hasattr(session, 'client_id')) or session.client_id != analyzere.oauth_client_id:
+            session = OAuth2Session(client=BackendApplicationClient(client_id=analyzere.oauth_client_id,
+                                                                    scope=analyzere.oauth_scope))
+            # Fetch first token
+            session.fetch_token(analyzere.oauth_token_url, **token_retrieval_kwargs)
+
+    elif not session:
+        session = requests.Session()
+
+
 def request_raw(method, path, params=None, body=None, headers=None,
                 handle_errors=True, auto_retry=True):
     kwargs = {
@@ -75,12 +89,9 @@ def request_raw(method, path, params=None, body=None, headers=None,
         'headers': headers,
         'verify': analyzere.tls_verify,
     }
+    token_retrieval_kwargs = {}
 
     url = urljoin(analyzere.base_url, path)
-
-    session = direct_auth_session
-    global oauth_session
-    oauth_kwargs = {}
 
     # Basic Auth
     if analyzere.username and analyzere.password:
@@ -96,31 +107,26 @@ def request_raw(method, path, params=None, body=None, headers=None,
 
     # Client Credentials
     elif analyzere.oauth_client_id:
-        oauth_kwargs = {
+        token_retrieval_kwargs = {
             "include_client_id": True,
             "client_secret": analyzere.oauth_client_secret
         }
 
-        if not oauth_session or oauth_session.client_id != analyzere.oauth_client_id:
-            oauth_session = OAuth2Session(client=BackendApplicationClient(client_id=analyzere.oauth_client_id,
-                                                                          scope=analyzere.oauth_scope))
-            oauth_session.fetch_token(analyzere.oauth_token_url, **oauth_kwargs)
-
-        session = oauth_session
+    ensure_session_exists(token_retrieval_kwargs)
 
     try:
         resp = session.request(method, url, **kwargs)
-    # Raised by Client Credentials flow if the token expired
-    # Not using auto-refresh because that sends a request of grant type `refresh_token`, and
-    # Client Credentials doesn't support refresh tokens.
     except TokenExpiredError:
-        oauth_session.fetch_token(analyzere.oauth_token_url, **oauth_kwargs)
+        # Raised by Client Credentials flow if the token expired
+        # Not using auto-refresh because that sends a request of grant type `refresh_token`, and
+        # Client Credentials doesn't support refresh tokens.
+        session.fetch_token(analyzere.oauth_token_url, **token_retrieval_kwargs)
         resp = session.request(method, url, **kwargs)
 
     # Handle HTTP 401 for Client Credentials
     # The token could have been invalidated before expiry, refresh and retry in that case
     if resp.status_code == 401 and analyzere.oauth_client_id:
-        oauth_session.fetch_token(analyzere.oauth_token_url, **oauth_kwargs)
+        session.fetch_token(analyzere.oauth_token_url, **token_retrieval_kwargs)
         resp = session.request(method, url, **kwargs)
 
     # Handle HTTP 503 with the Retry-After header by automatically retrying

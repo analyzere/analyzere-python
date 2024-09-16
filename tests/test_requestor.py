@@ -116,10 +116,13 @@ class TestClientCredentialsOAuth:
         analyzere.oauth_client_secret = ''
         analyzere.oauth_scope = ''
 
-    @pytest.fixture(autouse=True)
-    def teardown_after_test(self):
         # Avoid token re-use between tests
-        analyzere.requestor.oauth_session = None
+        analyzere.requestor.session = None
+
+    @pytest.fixture(autouse=True)
+    def pretest_cleanup(self):
+        # Avoid token re-use between tests
+        analyzere.requestor.session = None
 
     def _validate_token_params(self, request_text):
         assert 'grant_type=client_credentials' in request_text
