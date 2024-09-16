@@ -149,13 +149,10 @@ class TestClientCredentialsOAuth:
         assert reqmock.call_count == call_count_after_first_request + 1
         assert reqmock.last_request.url == 'https://api/bar'
 
-        # See that the token was re-used
+        # Expect the original token to be re-used
         assert reqmock.last_request.headers['Authorization'] == f'Bearer {mock_token}'
 
     def test_client_credentials_authentication_refresh(self, reqmock):
-        api_url = 'https://api/bar'
-        reqmock.get(api_url, status_code=200)
-
         first_mock_token = 's001'
         self._make_first_request_with_token(reqmock, first_mock_token, 1)
         call_count_after_first_request = reqmock.call_count
@@ -174,10 +171,10 @@ class TestClientCredentialsOAuth:
         assert analyzere.oauth_token_url in reqmock.request_history[2].url
         assert reqmock.request_history[2].method == 'POST'
 
-        assert reqmock.request_history[3].url == api_url
+        assert reqmock.request_history[3].url == self.api_url
         assert reqmock.request_history[3].method == 'GET'
 
-        # See that we have retrieved the new token
+        # Expect to see the new token
         assert reqmock.request_history[3].headers['Authorization'] == f'Bearer {second_mock_token}'
 
 
