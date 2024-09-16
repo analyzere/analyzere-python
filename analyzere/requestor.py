@@ -98,7 +98,9 @@ def request_raw(method, path, params=None, body=None, headers=None,
     elif analyzere.oauth_client_id:
         if not oauth_session or oauth_session.client_id != analyzere.oauth_client_id:
             oauth_session = OAuth2Session(client=BackendApplicationClient(client_id=analyzere.oauth_client_id))
-            oauth_session.fetch_token(analyzere.oauth_token_url, client_secret=analyzere.oauth_client_secret, scope=analyzere.oauth_scope)
+            oauth_session.fetch_token(analyzere.oauth_token_url,
+                                      client_secret=analyzere.oauth_client_secret,
+                                      scope=analyzere.oauth_scope)
 
         session = oauth_session
 
