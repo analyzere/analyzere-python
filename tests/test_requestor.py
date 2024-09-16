@@ -2,10 +2,11 @@ import base64
 
 import pytest
 import mock
+import time
 
 import analyzere
 from analyzere import AuthenticationError, InvalidRequestError, ServerError
-from analyzere.requestor import handle_api_error, request, request_raw, BearerAuth
+from analyzere.requestor import handle_api_error, request, request_raw
 
 
 class TestErrorHandling:
@@ -107,15 +108,15 @@ def setup_client_credentials(reqmock):
 
 
 def teardown_client_credentials(reqmock):
+    reqmock.reset()
+
     analyzere.oauth_token_url = ''
     analyzere.oauth_client_id = ''
     analyzere.oauth_client_secret = ''
     analyzere.oauth_scope = ''
 
-    reqmock.reset()
-
-    # Forced reset of bearer auth instance to avoid re-use of non-expired key between tests
-    analyzere.requestor.bearer_auth = BearerAuth()
+    # Avoid token re-use between tests
+    analyzere.requestor.oauth_session = None
 
 
 class TestRequestRaw:
@@ -174,17 +175,22 @@ class TestRequestRaw:
         setup_client_credentials(reqmock)
 
         first_mock_token = 's001'
-        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{first_mock_token}", "expires_in": -1}}')
+        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{first_mock_token}", "expires_in": 1}}')
 
         request_raw('get', 'bar')
 
         # One GET to API root, one POST to token URL
         assert reqmock.last_request.headers['Authorization'] == f'Bearer {first_mock_token}'
+        for r in reqmock.request_history:
+            print(r.url)
         assert reqmock.call_count == 2
+
+        # Wait for token to expire
+        time.sleep(1)
 
         # Mock a second token and make another request
         second_mock_token = 's002'
-        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{second_mock_token}", "expires_in": -1}}')
+        reqmock.post(analyzere.oauth_token_url, text=f'{{"access_token": "{second_mock_token}", "expires_in": 1}}')
         request_raw('get', 'bar')
 
         # Additional GET to API root, additional POST to token URL
@@ -216,7 +222,7 @@ class TestRequestRaw:
         with pytest.raises(InvalidRequestError):
             request_raw('get', 'bar')
 
-    def test_request_retying(self, reqmock):
+    def test_request_retrying(self, reqmock):
         reqmock.get('https://api/bar', [
             {'status_code': 503, 'headers': {'Retry-After': '1.0'}},
             {'status_code': 200, 'text': 'foo'},

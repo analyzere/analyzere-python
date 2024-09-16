@@ -3,6 +3,7 @@ import time
 
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
+from oauthlib.oauth2 import TokenExpiredError
 from requests_oauthlib import OAuth2Session
 from six.moves.urllib.parse import urljoin
 
@@ -10,7 +11,8 @@ import analyzere
 from analyzere import errors, utils
 
 
-session = requests.Session()
+direct_auth_session = requests.Session()
+oauth_session = None
 
 
 def handle_api_error(resp, code):
@@ -66,39 +68,6 @@ def request(method, path, params=None, data=None, auto_retry=True):
     return content
 
 
-class BearerAuth:
-    def __init__(self):
-        self.oauth = None
-        self.token = None
-        self.expiry = None
-
-    def _set_oauth_client(self):
-        client = BackendApplicationClient(client_id=analyzere.oauth_client_id)
-        self.oauth = OAuth2Session(client=client)
-
-    def get_auth_header(self):
-        if analyzere.bearer_auth_token:
-            self.token = analyzere.bearer_auth_token
-        else:
-            # Refresh token if uninitialized or expired
-            if not self.expiry or time.time() > self.expiry:
-                if not self.oauth or (self.oauth.client_id != analyzere.oauth_client_id):
-                    self._set_oauth_client()
-
-                token_result = self.oauth.fetch_token(
-                    token_url=analyzere.oauth_token_url,
-                    client_id=analyzere.oauth_client_id,
-                    client_secret=analyzere.oauth_client_secret,
-                    scope=analyzere.oauth_scope)
-                self.token = token_result["access_token"]
-                self.expiry = time.time() + token_result["expires_in"]
-
-        return {"authorization": "Bearer " + self.token}
-
-
-bearer_auth = BearerAuth()
-
-
 def request_raw(method, path, params=None, body=None, headers=None,
                 handle_errors=True, auto_retry=True):
     kwargs = {
@@ -108,18 +77,47 @@ def request_raw(method, path, params=None, body=None, headers=None,
         'verify': analyzere.tls_verify,
     }
 
-    username = analyzere.username
-    password = analyzere.password
-    if username and password:
-        kwargs['auth'] = (username, password)
-    elif analyzere.bearer_auth_token or analyzere.oauth_client_id:
-        if kwargs['headers']:
-            kwargs['headers'] = {**kwargs['headers'], **bearer_auth.get_auth_header()}
-        else:
-            kwargs['headers'] = bearer_auth.get_auth_header()
+    url = urljoin(analyzere.base_url, path)
 
-    resp = session.request(method, urljoin(analyzere.base_url, path),
-                           **kwargs)
+    session = direct_auth_session
+    global oauth_session
+
+    # Basic Auth
+    if analyzere.username and analyzere.password:
+        kwargs['auth'] = (analyzere.username, analyzere.password)
+
+    # Direct token
+    if analyzere.bearer_auth_token:
+        if headers is None:
+            headers = {}
+
+        headers['Authorization'] = f'Bearer {analyzere.bearer_auth_token}'
+        kwargs['headers'] = headers
+
+    # Client Credentials
+    elif analyzere.oauth_client_id:
+        if not oauth_session or oauth_session.client_id != analyzere.oauth_client_id:
+            oauth_session = OAuth2Session(client=BackendApplicationClient(client_id=analyzere.oauth_client_id))
+            oauth_session.fetch_token(analyzere.oauth_token_url, client_secret=analyzere.oauth_client_secret, scope=analyzere.oauth_scope)
+
+        session = oauth_session
+
+    # Send request
+    try:
+        resp = session.request(
+            method,
+            url,
+            **kwargs
+        )
+    # Raised by Client Credentials flow if the token expired
+    # Refresh token and retry
+    except TokenExpiredError:
+        oauth_session.refresh_token(analyzere.oauth_token_url)
+        resp = session.request(
+            method,
+            url,
+            **kwargs
+        )
 
     # Handle HTTP 503 with the Retry-After header by automatically retrying
     # request after sleeping for the recommended amount of time
@@ -127,7 +125,7 @@ def request_raw(method, path, params=None, body=None, headers=None,
     while auto_retry and (resp.status_code == 503 and retry_after):
         time.sleep(float(retry_after))
         # Repeat original request after Retry-After time has elapsed.
-        resp = session.request(method, urljoin(analyzere.base_url, path),
+        resp = session.request(method, url,
                                **kwargs)
         retry_after = resp.headers.get('Retry-After')
 
