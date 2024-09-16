@@ -97,29 +97,20 @@ def request_raw(method, path, params=None, body=None, headers=None,
     # Client Credentials
     elif analyzere.oauth_client_id:
         if not oauth_session or oauth_session.client_id != analyzere.oauth_client_id:
-            oauth_session = OAuth2Session(client=BackendApplicationClient(client_id=analyzere.oauth_client_id))
+            oauth_session = OAuth2Session(client=BackendApplicationClient(client_id=analyzere.oauth_client_id),
+                                          auto_refresh_url=analyzere.oauth_token_url,
+                                          token_updater=lambda _: None)
             oauth_session.fetch_token(analyzere.oauth_token_url,
                                       client_secret=analyzere.oauth_client_secret,
                                       scope=analyzere.oauth_scope)
 
         session = oauth_session
 
-    # Send request
-    try:
-        resp = session.request(
-            method,
-            url,
-            **kwargs
-        )
-    # Raised by Client Credentials flow if the token expired
-    # Refresh token and retry
-    except TokenExpiredError:
-        oauth_session.refresh_token(analyzere.oauth_token_url)
-        resp = session.request(
-            method,
-            url,
-            **kwargs
-        )
+    resp = session.request(
+        method,
+        url,
+        **kwargs
+    )
 
     # Handle HTTP 503 with the Retry-After header by automatically retrying
     # request after sleeping for the recommended amount of time
