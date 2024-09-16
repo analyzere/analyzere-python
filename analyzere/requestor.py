@@ -87,7 +87,7 @@ def request_raw(method, path, params=None, body=None, headers=None,
         kwargs['auth'] = (analyzere.username, analyzere.password)
 
     # Direct token
-    if analyzere.bearer_auth_token:
+    elif analyzere.bearer_auth_token:
         if headers is None:
             headers = {}
 
