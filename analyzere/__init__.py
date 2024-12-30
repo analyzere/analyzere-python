@@ -21,7 +21,7 @@ upload_chunk_size = 16 * one_megabyte
 tls_verify = True
 user_agent = 'analyzere-python 0.8-dev'
 connection_pool_maxsize = 10
-retry_strategy_total = 25
+retry_strategy_total = 0
 retry_strategy_backoff_factor = 0.1
 
 from analyzere.resources import (  # noqa
