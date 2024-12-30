@@ -2,6 +2,7 @@ import json
 import time
 
 import requests
+import requests.adapters
 from oauthlib.oauth2 import BackendApplicationClient, TokenExpiredError
 from requests_oauthlib import OAuth2Session
 from six.moves.urllib.parse import urljoin
@@ -69,16 +70,28 @@ def request(method, path, params=None, data=None, auto_retry=True):
 def ensure_session_exists(token_retrieval_kwargs):
     global session
 
+    initializing_session = False
+
     if analyzere.oauth_client_id:
         # Ensure OAuth Session
         if not session or (not hasattr(session, 'client_id')) or session.client_id != analyzere.oauth_client_id:
+            initializing_session = True
             session = OAuth2Session(client=BackendApplicationClient(client_id=analyzere.oauth_client_id,
                                                                     scope=analyzere.oauth_scope))
             # Fetch first token
             session.fetch_token(analyzere.oauth_token_url, **token_retrieval_kwargs)
 
     elif not session:
+        initializing_session = True
         session = requests.Session()
+
+    if initializing_session:
+        # Set connection pool and retry strategy
+        retries = requests.adapters.Retry(total=analyzere.retry_strategy_total,
+                                          backoff_factor=analyzere.retry_strategy_backoff_factor)
+        session.mount(
+            "https://",
+            requests.adapters.HTTPAdapter(pool_maxsize=analyzere.connection_pool_maxsize, max_retries=retries))
 
 
 def request_raw(method, path, params=None, body=None, headers=None,
