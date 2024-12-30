@@ -89,8 +89,9 @@ def ensure_session_exists(token_retrieval_kwargs):
         # Set connection pool and retry strategy
         retries = requests.adapters.Retry(total=analyzere.retry_strategy_total,
                                           backoff_factor=analyzere.retry_strategy_backoff_factor)
-        session.mount("https://",
-                      requests.adapters.HTTPAdapter(pool_maxsize=analyzere.connection_pool_maxsize, max_retries=retries))
+        session.mount(
+            "https://",
+            requests.adapters.HTTPAdapter(pool_maxsize=analyzere.connection_pool_maxsize, max_retries=retries))
 
 
 def request_raw(method, path, params=None, body=None, headers=None,
